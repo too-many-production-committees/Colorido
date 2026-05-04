@@ -78,7 +78,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return;
         }
 
-        if ((CurrentAreaState & PlayerProjectionAreaState.SideArea) != 0)
+        if (IsPureSideArea(CurrentAreaState))
         {
             TryRelocateFromSideArea();
             return;
@@ -193,8 +193,37 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
     public bool TryRelocateFromSideArea()
     {
-        Log("TryRelocateFromSideArea called. Placeholder only; no player position changes are performed yet.");
-        return false;
+        ResolveReferences();
+
+        if (!IsPureSideArea(CurrentAreaState))
+        {
+            Log($"SideArea relocation skipped. Current state is not pure SideArea: {CurrentAreaState}.");
+            return false;
+        }
+
+        if (projectionManager == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot relocate from SideArea because ProjectionManager is missing.", this);
+            return false;
+        }
+
+        if (player == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot relocate from SideArea because Player Transform is missing.", this);
+            return false;
+        }
+
+        Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
+        Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
+
+        if (!TryFindSideAreaTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        {
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot relocate from SideArea. No current-view level area contains projected player anchor {playerProjectionPosition}.", this);
+            return false;
+        }
+
+        Log($"Relocating from SideArea to '{targetWalkable.name}' at depth {targetDepth:0.00}.");
+        return ApplyDepthOnlyRelocation(targetDepth);
     }
 
     public bool TryRelocateFromFarArea()
@@ -270,6 +299,80 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     private float EvaluateOcclusionRatio()
     {
         return 0f;
+    }
+
+    private bool IsPureSideArea(PlayerProjectionAreaState state)
+    {
+        if ((state & PlayerProjectionAreaState.SideArea) == 0)
+            return false;
+
+        PlayerProjectionAreaState disallowedStates =
+            PlayerProjectionAreaState.FarArea |
+            PlayerProjectionAreaState.NearArea |
+            PlayerProjectionAreaState.CommonArea |
+            PlayerProjectionAreaState.ExclusiveArea;
+
+        return (state & disallowedStates) == 0;
+    }
+
+    private bool TryFindSideAreaTargetDepth(
+        Vector2 playerProjectionPosition,
+        out float targetDepth,
+        out ProjectionWalkable targetWalkable)
+    {
+        targetDepth = 0f;
+        targetWalkable = null;
+
+        ProjectionView currentView = projectionManager.CurrentView;
+        ProjectionViewMask currentViewMask = ProjectionViewUtility.ToMask(currentView);
+        ProjectionWalkable[] walkables = FindObjectsByType<ProjectionWalkable>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        float bestLayerDistance = float.PositiveInfinity;
+
+        for (int i = 0; i < walkables.Length; i++)
+        {
+            ProjectionWalkable walkable = walkables[i];
+            if (walkable == null ||
+                !walkable.isActiveAndEnabled ||
+                !walkable.CanProjectInView(currentView))
+                continue;
+
+            ProjectionViewMask activeViews = GetWalkableActiveViews(walkable);
+            if (!IsCurrentViewLevelArea(activeViews, currentViewMask, walkable.alwaysProjected))
+                continue;
+
+            Bounds bounds = walkable.GetProjectionBounds();
+            Rect projectionRect = GetProjectedBoundsRect(bounds);
+            if (!ContainsProjectionPoint(projectionRect, playerProjectionPosition))
+                continue;
+
+            float layerDistance = GetDistanceFromCameraAlongView(bounds.center);
+            if (targetWalkable != null && layerDistance >= bestLayerDistance)
+                continue;
+
+            targetWalkable = walkable;
+            bestLayerDistance = layerDistance;
+            targetDepth = projectionManager.WorldToProjectionDepth(bounds.center);
+        }
+
+        return targetWalkable != null;
+    }
+
+    private bool IsCurrentViewLevelArea(
+        ProjectionViewMask activeViews,
+        ProjectionViewMask currentViewMask,
+        bool alwaysProjected)
+    {
+        if (alwaysProjected)
+            return true;
+
+        if ((activeViews & currentViewMask) == 0)
+            return false;
+
+        return IsExclusiveToCurrentView(activeViews, currentViewMask) ||
+            IsCommonViewMask(activeViews);
     }
 
     private Vector3 GetPlayerProjectionAnchorWorldPosition()

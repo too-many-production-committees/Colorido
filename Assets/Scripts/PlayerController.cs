@@ -100,6 +100,7 @@ public class PlayerController : MonoBehaviour
         float depth = projectionManager.WorldToProjectionDepth(currentFeet);
         Vector3 targetFeet = projectionManager.Projection2DToWorld(projectionBody.position, depth);
         MoveTransformByFeetDelta(targetFeet - currentFeet);
+        ConstrainWorldPositionToWalkableArea();
     }
 
     public void TeleportTo(Vector3 worldPosition)
@@ -219,6 +220,7 @@ public class PlayerController : MonoBehaviour
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
+        ConstrainWorldPositionToWalkableArea();
     }
 
     void UpdateJumpBuffer()
@@ -557,6 +559,80 @@ public class PlayerController : MonoBehaviour
 
         if (controllerWasEnabled)
             controller.enabled = true;
+    }
+
+    void ConstrainWorldPositionToWalkableArea()
+    {
+        if (!constrainToWalkableArea)
+            return;
+
+        Vector3 feetPosition = GetFeetWorldPosition();
+
+        ProjectionWalkable[] walkables = FindObjectsByType<ProjectionWalkable>(
+            FindObjectsInactive.Exclude, FindObjectsSortMode.None);
+
+        const float verticalTolerance = 0.15f;
+
+        // Check if feet XZ is within any walkable horizontal bounds
+        for (int i = 0; i < walkables.Length; i++)
+        {
+            ProjectionWalkable walkable = walkables[i];
+            if (walkable == null || !walkable.isActiveAndEnabled)
+                continue;
+
+            Bounds bounds = walkable.GetProjectionBounds();
+            bounds.Expand(0.05f);
+
+            if (feetPosition.x >= bounds.min.x && feetPosition.x <= bounds.max.x &&
+                feetPosition.z >= bounds.min.z && feetPosition.z <= bounds.max.z &&
+                feetPosition.y >= bounds.min.y - verticalTolerance)
+                return;
+        }
+
+        // Player XZ is outside all walkables — find nearest and clamp horizontally only
+        ProjectionWalkable nearest = null;
+        float nearestDist = float.PositiveInfinity;
+        float clampedX = feetPosition.x;
+        float clampedZ = feetPosition.z;
+
+        for (int i = 0; i < walkables.Length; i++)
+        {
+            ProjectionWalkable walkable = walkables[i];
+            if (walkable == null || !walkable.isActiveAndEnabled)
+                continue;
+
+            Bounds bounds = walkable.GetProjectionBounds();
+            float cx = Mathf.Clamp(feetPosition.x, bounds.min.x, bounds.max.x);
+            float cz = Mathf.Clamp(feetPosition.z, bounds.min.z, bounds.max.z);
+            float dy = Mathf.Max(0f, bounds.min.y - feetPosition.y, feetPosition.y - bounds.max.y);
+
+            float dist = Vector3.Distance(feetPosition,
+                new Vector3(cx, Mathf.Clamp(feetPosition.y, bounds.min.y, bounds.max.y), cz));
+
+            if (dist < nearestDist)
+            {
+                nearestDist = dist;
+                nearest = walkable;
+                clampedX = cx;
+                clampedZ = cz;
+            }
+        }
+
+        if (nearest != null)
+        {
+            Vector3 targetFeet = feetPosition;
+            targetFeet.x = clampedX;
+            targetFeet.z = clampedZ;
+
+            MoveTransformByFeetDelta(targetFeet - feetPosition);
+
+            // Sync projection body position, preserve vertical velocity
+            if (useProjectionPhysics && projectionBody != null && projectionManager != null)
+            {
+                projectionBody.position = projectionManager.WorldToProjection2D(GetFeetWorldPosition());
+                projectionBody.velocity = new Vector2(0f, projectionBody.velocity.y);
+            }
+        }
     }
 
     public void HandleProjectionTriggerEnter(Collider2D other)

@@ -250,12 +250,15 @@ public class PlayerController : MonoBehaviour
         if (playerActionRelocator == null)
             return;
 
-        bool hasMoveInput = Mathf.Abs(GetHorizontalInput()) > 0.01f ||
-            Input.GetKey(KeyCode.A) ||
-            Input.GetKey(KeyCode.D) ||
-            Input.GetKey(KeyCode.LeftArrow) ||
-            Input.GetKey(KeyCode.RightArrow);
+        bool hasMoveInput = Mathf.Abs(GetHorizontalInput()) > 0.01f;
         if (!hasMoveInput && !jumpPressedThisFrame)
+            return;
+
+        bool groundedForRelocation = useProjectionPhysics
+            ? IsProjectionGrounded()
+            : controller != null && controller.isGrounded;
+
+        if (hasMoveInput && !jumpPressedThisFrame && !groundedForRelocation)
             return;
 
         playerActionRelocator.OnPlayerActionInput(hasMoveInput, jumpPressedThisFrame);

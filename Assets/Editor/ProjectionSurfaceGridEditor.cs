@@ -96,6 +96,9 @@ public class ProjectionSurfaceGridEditor : Editor
 
     void DrawGrid()
     {
+        if (!HasValidGridData())
+            return;
+
         ProjectionViewMask editingMask = grid.GetEditingViewMask();
 
         UnityEngine.Rendering.CompareFunction previousZTest = Handles.zTest;
@@ -105,9 +108,12 @@ public class ProjectionSurfaceGridEditor : Editor
         {
             for (int column = 0; column < grid.columns; column++)
             {
-                int index = grid.GetIndex(column, row);
-                ProjectionSurfaceCell cell = grid.cells[index];
+                if (!TryGetCell(column, row, out _, out ProjectionSurfaceCell cell))
+                    continue;
+
                 Vector3[] corners = grid.GetCellWorldCorners(column, row, grid.editorVisualOffset);
+                if (!HasFourCorners(corners))
+                    continue;
 
                 bool belongsToEditingView = (cell.activeViews & editingMask) != 0;
                 Color fill = GetCellColor(cell.cellType);
@@ -125,8 +131,12 @@ public class ProjectionSurfaceGridEditor : Editor
 
     void DrawSurfaceOutline()
     {
+        Vector3[] corners = grid.GetSurfaceWorldCorners(grid.editorVisualOffset);
+        if (!HasFourCorners(corners))
+            return;
+
         Handles.DrawSolidRectangleWithOutline(
-            grid.GetSurfaceWorldCorners(grid.editorVisualOffset),
+            corners,
             new Color(1f, 1f, 1f, 0.06f),
             new Color(1f, 0.9f, 0.1f, 1f));
     }
@@ -144,6 +154,11 @@ public class ProjectionSurfaceGridEditor : Editor
         int maxColumn = Mathf.Max(selectionStartColumn, selectionEndColumn);
         int minRow = Mathf.Min(selectionStartRow, selectionEndRow);
         int maxRow = Mathf.Max(selectionStartRow, selectionEndRow);
+
+        ClampCellRange(ref minColumn, ref minRow, ref maxColumn, ref maxRow);
+        if (minColumn > maxColumn || minRow > maxRow)
+            return;
+
         Color fill = GetCellColor(grid.brushType);
         fill.a = 0.42f;
         Color outline = new Color(1f, 0.9f, 0.1f, 1f);
@@ -152,8 +167,12 @@ public class ProjectionSurfaceGridEditor : Editor
         {
             for (int column = minColumn; column <= maxColumn; column++)
             {
+                Vector3[] corners = grid.GetCellWorldCorners(column, row, grid.editorVisualOffset + 0.005f);
+                if (!HasFourCorners(corners))
+                    continue;
+
                 Handles.DrawSolidRectangleWithOutline(
-                    grid.GetCellWorldCorners(column, row, grid.editorVisualOffset + 0.005f),
+                    corners,
                     fill,
                     outline);
             }
@@ -234,6 +253,9 @@ public class ProjectionSurfaceGridEditor : Editor
             return;
 
         int index = grid.GetIndex(column, row);
+        if (!IsValidCellIndex(index))
+            return;
+
         if (index == lastPaintedIndex && current.type == EventType.MouseDrag)
             return;
 
@@ -251,14 +273,11 @@ public class ProjectionSurfaceGridEditor : Editor
 
     void PaintCell(int index)
     {
+        if (!IsValidCellIndex(index))
+            return;
+
         Undo.RecordObject(grid, "Paint Projection Surface Cell");
-        grid.cells[index] = new ProjectionSurfaceCell
-        {
-            cellType = grid.brushType,
-            activeViews = grid.brushType == ProjectionCellType.Empty
-                ? ProjectionViewMask.None
-                : grid.GetBrushViews()
-        };
+        grid.cells[index] = GetPaintedCell(grid.cells[index]);
         EditorUtility.SetDirty(grid);
     }
 
@@ -274,6 +293,10 @@ public class ProjectionSurfaceGridEditor : Editor
         int maxColumn = Mathf.Max(startColumn, endColumn);
         int minRow = Mathf.Min(startRow, endRow);
         int maxRow = Mathf.Max(startRow, endRow);
+        ClampCellRange(ref minColumn, ref minRow, ref maxColumn, ref maxRow);
+        if (minColumn > maxColumn || minRow > maxRow)
+            return;
+
         ProjectionViewMask activeViews = grid.brushType == ProjectionCellType.Empty
             ? ProjectionViewMask.None
             : grid.GetBrushViews();
@@ -282,15 +305,39 @@ public class ProjectionSurfaceGridEditor : Editor
         {
             for (int column = minColumn; column <= maxColumn; column++)
             {
-                grid.cells[grid.GetIndex(column, row)] = new ProjectionSurfaceCell
-                {
-                    cellType = grid.brushType,
-                    activeViews = activeViews
-                };
+                if (!TryGetCell(column, row, out int index, out ProjectionSurfaceCell cell))
+                    continue;
+
+                grid.cells[index] = GetPaintedCell(cell, activeViews);
             }
         }
 
         EditorUtility.SetDirty(grid);
+    }
+
+    ProjectionSurfaceCell GetPaintedCell(ProjectionSurfaceCell current)
+    {
+        ProjectionViewMask activeViews = grid.brushType == ProjectionCellType.Empty
+            ? ProjectionViewMask.None
+            : grid.GetBrushViews();
+        return GetPaintedCell(current, activeViews);
+    }
+
+    ProjectionSurfaceCell GetPaintedCell(ProjectionSurfaceCell current, ProjectionViewMask activeViews)
+    {
+        if (grid.brushType == ProjectionCellType.Empty || activeViews == ProjectionViewMask.None)
+            return default;
+
+        ProjectionViewMask mergedViews = activeViews;
+        if (current.cellType != ProjectionCellType.Empty &&
+            current.cellType == grid.brushType)
+            mergedViews |= current.activeViews;
+
+        return new ProjectionSurfaceCell
+        {
+            cellType = grid.brushType,
+            activeViews = mergedViews
+        };
     }
 
     void ClearSelectionState()
@@ -362,12 +409,16 @@ public class ProjectionSurfaceGridEditor : Editor
         {
             for (int column = 0; column < grid.columns; column++)
             {
-                int index = grid.GetIndex(column, row);
-                ProjectionSurfaceCell cell = grid.cells[index];
+                if (!TryGetCell(column, row, out _, out ProjectionSurfaceCell cell))
+                    continue;
+
                 if (cell.cellType == ProjectionCellType.Empty || cell.activeViews == ProjectionViewMask.None)
                     continue;
 
                 Vector3[] corners = grid.GetCellWorldCorners(column, row);
+                if (!HasFourCorners(corners))
+                    continue;
+
                 Vector3 center = (corners[0] + corners[1] + corners[2] + corners[3]) * 0.25f;
                 Vector3 cellUp = corners[1] - corners[0];
                 Vector3 cellRight = corners[3] - corners[0];
@@ -446,5 +497,59 @@ public class ProjectionSurfaceGridEditor : Editor
             activeViews != ProjectionViewMask.Right &&
             activeViews != ProjectionViewMask.Back &&
             activeViews != ProjectionViewMask.Left;
+    }
+
+    bool HasValidGridData()
+    {
+        if (grid == null)
+            return false;
+
+        grid.EnsureCellArray();
+        return grid.cells != null && grid.cells.Length >= grid.CellCount;
+    }
+
+    bool TryGetCell(int column, int row, out int index, out ProjectionSurfaceCell cell)
+    {
+        index = -1;
+        cell = default;
+
+        if (!HasValidGridData())
+            return false;
+
+        if (column < 0 || row < 0 || column >= grid.columns || row >= grid.rows)
+            return false;
+
+        index = grid.GetIndex(column, row);
+        if (!IsValidCellIndex(index))
+            return false;
+
+        cell = grid.cells[index];
+        return true;
+    }
+
+    bool IsValidCellIndex(int index)
+    {
+        return grid != null &&
+            grid.cells != null &&
+            index >= 0 &&
+            index < grid.cells.Length;
+    }
+
+    void ClampCellRange(ref int minColumn, ref int minRow, ref int maxColumn, ref int maxRow)
+    {
+        if (grid == null)
+            return;
+
+        int lastColumn = Mathf.Max(0, grid.columns - 1);
+        int lastRow = Mathf.Max(0, grid.rows - 1);
+        minColumn = Mathf.Clamp(minColumn, 0, lastColumn);
+        maxColumn = Mathf.Clamp(maxColumn, 0, lastColumn);
+        minRow = Mathf.Clamp(minRow, 0, lastRow);
+        maxRow = Mathf.Clamp(maxRow, 0, lastRow);
+    }
+
+    bool HasFourCorners(Vector3[] corners)
+    {
+        return corners != null && corners.Length >= 4;
     }
 }

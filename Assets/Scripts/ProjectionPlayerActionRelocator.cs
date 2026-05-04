@@ -14,6 +14,8 @@ public enum PlayerProjectionAreaState
 
 public class ProjectionPlayerActionRelocator : MonoBehaviour
 {
+    private const float ProjectionContainmentTolerance = 0.05f;
+
     [Header("References")]
     public ProjectionManager projectionManager;
     public Transform player;
@@ -92,8 +94,101 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         currentOcclusionRatio = EvaluateOcclusionRatio();
 
-        Log("EvaluatePlayerAreaState is using placeholder logic. Region classification will be implemented in a later pass.");
-        return PlayerProjectionAreaState.None;
+        if (projectionManager == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] TODO: Cannot evaluate area state because ProjectionManager is missing.", this);
+            return PlayerProjectionAreaState.None;
+        }
+
+        if (player == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] TODO: Cannot evaluate area state because Player Transform is missing.", this);
+            return PlayerProjectionAreaState.None;
+        }
+
+        ProjectionView currentView = projectionManager.CurrentView;
+        ProjectionViewMask currentViewMask = ProjectionViewUtility.ToMask(currentView);
+        Vector3 playerWorldPosition = player.position;
+        Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerWorldPosition);
+
+        ProjectionWalkable[] walkables = FindObjectsByType<ProjectionWalkable>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        bool foundActiveWalkable = false;
+        bool foundContainingWalkable = false;
+        float nearestLayerDistance = float.PositiveInfinity;
+        float farthestLayerDistance = float.NegativeInfinity;
+        float containingLayerDistance = 0f;
+        ProjectionViewMask containingViews = ProjectionViewMask.None;
+        ProjectionWalkable containingWalkable = null;
+
+        for (int i = 0; i < walkables.Length; i++)
+        {
+            ProjectionWalkable walkable = walkables[i];
+            if (walkable == null ||
+                !walkable.isActiveAndEnabled ||
+                !walkable.CanProjectInView(currentView))
+                continue;
+
+            ProjectionViewMask activeViews = GetWalkableActiveViews(walkable);
+            if ((activeViews & currentViewMask) == 0 && !walkable.alwaysProjected)
+                continue;
+
+            Bounds bounds = walkable.GetProjectionBounds();
+            Rect projectionRect = GetProjectedBoundsRect(bounds);
+            float layerDistance = GetDistanceFromCameraAlongView(bounds.center);
+
+            foundActiveWalkable = true;
+            nearestLayerDistance = Mathf.Min(nearestLayerDistance, layerDistance);
+            farthestLayerDistance = Mathf.Max(farthestLayerDistance, layerDistance);
+
+            if (!ContainsProjectionPoint(projectionRect, playerProjectionPosition))
+                continue;
+
+            if (!foundContainingWalkable ||
+                Mathf.Abs(layerDistance - GetDistanceFromCameraAlongView(playerWorldPosition)) <
+                Mathf.Abs(containingLayerDistance - GetDistanceFromCameraAlongView(playerWorldPosition)))
+            {
+                foundContainingWalkable = true;
+                containingLayerDistance = layerDistance;
+                containingViews = activeViews;
+                containingWalkable = walkable;
+            }
+        }
+
+        PlayerProjectionAreaState state = PlayerProjectionAreaState.None;
+
+        if (!foundActiveWalkable)
+        {
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] TODO: No active ProjectionWalkable areas were found for current view {currentView}. Player is treated as SideArea.", this);
+            return PlayerProjectionAreaState.SideArea;
+        }
+
+        if (!foundContainingWalkable)
+        {
+            state |= PlayerProjectionAreaState.SideArea;
+            Log($"Player projection position {playerProjectionPosition} is outside all active walkable projection rects for {currentView}.");
+            return state;
+        }
+
+        if (IsCommonViewMask(containingViews))
+            state |= PlayerProjectionAreaState.CommonArea;
+
+        if (IsExclusiveToCurrentView(containingViews, currentViewMask))
+            state |= PlayerProjectionAreaState.ExclusiveArea;
+
+        if (Mathf.Approximately(containingLayerDistance, nearestLayerDistance))
+            state |= PlayerProjectionAreaState.NearArea;
+
+        if (Mathf.Approximately(containingLayerDistance, farthestLayerDistance))
+            state |= PlayerProjectionAreaState.FarArea;
+
+        if ((state & (PlayerProjectionAreaState.NearArea | PlayerProjectionAreaState.FarArea)) == 0)
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] TODO: Player is on an intermediate depth layer ({containingWalkable.name}). Multi-layer near/far policy is not defined yet.", this);
+
+        Log($"Evaluated area state: {state}. Walkable: {containingWalkable.name}. Views: {containingViews}. Layer distance: {containingLayerDistance:0.00}. Near: {nearestLayerDistance:0.00}. Far: {farthestLayerDistance:0.00}.");
+        return state;
     }
 
     public bool TryRelocateFromSideArea()
@@ -149,6 +244,95 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     private float EvaluateOcclusionRatio()
     {
         return 0f;
+    }
+
+    private ProjectionViewMask GetWalkableActiveViews(ProjectionWalkable walkable)
+    {
+        ProjectionArea area = walkable.GetComponent<ProjectionArea>();
+        if (area != null)
+            return area.activeViews;
+
+        Debug.LogWarning($"[ProjectionPlayerActionRelocator] TODO: ProjectionWalkable '{walkable.name}' has no ProjectionArea. Falling back to ProjectionWalkable.activeViews.", this);
+        return walkable.alwaysProjected
+            ? ProjectionViewMask.All
+            : walkable.activeViews;
+    }
+
+    private float GetDistanceFromCameraAlongView(Vector3 worldPosition)
+    {
+        Camera projectionCamera = projectionManager.projectionCamera != null
+            ? projectionManager.projectionCamera
+            : Camera.main;
+
+        if (projectionCamera == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] TODO: Projection camera is missing. Falling back to ProjectionManager depth for near/far evaluation.", this);
+            return projectionManager.WorldToProjectionDepth(worldPosition);
+        }
+
+        return Vector3.Dot(worldPosition - projectionCamera.transform.position, projectionManager.viewForward);
+    }
+
+    private Rect GetProjectedBoundsRect(Bounds bounds)
+    {
+        Vector3 min = bounds.min;
+        Vector3 max = bounds.max;
+        Vector3[] corners =
+        {
+            new Vector3(min.x, min.y, min.z),
+            new Vector3(min.x, min.y, max.z),
+            new Vector3(min.x, max.y, min.z),
+            new Vector3(min.x, max.y, max.z),
+            new Vector3(max.x, min.y, min.z),
+            new Vector3(max.x, min.y, max.z),
+            new Vector3(max.x, max.y, min.z),
+            new Vector3(max.x, max.y, max.z)
+        };
+
+        Vector2 rectMin = Vector2.one * float.PositiveInfinity;
+        Vector2 rectMax = Vector2.one * float.NegativeInfinity;
+
+        for (int i = 0; i < corners.Length; i++)
+        {
+            Vector2 point = projectionManager.WorldToProjection2D(corners[i]);
+            rectMin = Vector2.Min(rectMin, point);
+            rectMax = Vector2.Max(rectMax, point);
+        }
+
+        return Rect.MinMaxRect(rectMin.x, rectMin.y, rectMax.x, rectMax.y);
+    }
+
+    private bool ContainsProjectionPoint(Rect rect, Vector2 point)
+    {
+        return point.x >= rect.xMin - ProjectionContainmentTolerance &&
+               point.x <= rect.xMax + ProjectionContainmentTolerance &&
+               point.y >= rect.yMin - ProjectionContainmentTolerance &&
+               point.y <= rect.yMax + ProjectionContainmentTolerance;
+    }
+
+    private bool IsCommonViewMask(ProjectionViewMask activeViews)
+    {
+        return CountViews(activeViews) > 1;
+    }
+
+    private bool IsExclusiveToCurrentView(ProjectionViewMask activeViews, ProjectionViewMask currentViewMask)
+    {
+        return activeViews == currentViewMask;
+    }
+
+    private int CountViews(ProjectionViewMask activeViews)
+    {
+        int count = 0;
+        if ((activeViews & ProjectionViewMask.Front) != 0)
+            count++;
+        if ((activeViews & ProjectionViewMask.Right) != 0)
+            count++;
+        if ((activeViews & ProjectionViewMask.Back) != 0)
+            count++;
+        if ((activeViews & ProjectionViewMask.Left) != 0)
+            count++;
+
+        return count;
     }
 
     private void Log(string message)

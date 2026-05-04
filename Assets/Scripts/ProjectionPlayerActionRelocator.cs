@@ -216,7 +216,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
         Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
 
-        if (!TryFindSideAreaTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        if (!TryFindNearestLevelTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
         {
             Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot relocate from SideArea. No current-view level area contains projected player anchor {playerProjectionPosition}.", this);
             return false;
@@ -228,6 +228,33 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
     public bool TryRelocateFromFarArea()
     {
+        ResolveReferences();
+
+        if ((CurrentAreaState & PlayerProjectionAreaState.FarArea) == 0)
+        {
+            Log($"FarArea relocation skipped. Current state is not FarArea: {CurrentAreaState}.");
+            return false;
+        }
+
+        if ((CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
+        {
+            pendingNearTransfer = false;
+            Log($"FarArea relocation skipped because player is already on the nearest level. Current state: {CurrentAreaState}.");
+            return false;
+        }
+
+        if (projectionManager == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot relocate from FarArea because ProjectionManager is missing.", this);
+            return false;
+        }
+
+        if (player == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot relocate from FarArea because Player Transform is missing.", this);
+            return false;
+        }
+
         currentOcclusionRatio = EvaluateOcclusionRatio();
 
         if (currentOcclusionRatio >= occlusionThreshold)
@@ -237,8 +264,21 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return false;
         }
 
-        Log($"TryRelocateFromFarArea called. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}. Placeholder only; no player position changes are performed yet.");
-        return false;
+        Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
+        Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
+
+        if (!TryFindNearestLevelTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        {
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot relocate from FarArea. No nearest level area contains projected player anchor {playerProjectionPosition}.", this);
+            return false;
+        }
+
+        Log($"Relocating from FarArea to nearest level '{targetWalkable.name}' at depth {targetDepth:0.00}. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}.");
+        bool relocated = ApplyDepthOnlyRelocation(targetDepth);
+        if (relocated)
+            pendingNearTransfer = false;
+
+        return relocated;
     }
 
     public bool ApplyDepthOnlyRelocation(float targetDepth)
@@ -276,8 +316,32 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         if (currentOcclusionRatio >= occlusionThreshold)
             return;
 
-        pendingNearTransfer = false;
-        Log($"Pending near transfer condition reached. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}. Placeholder only; no player position changes are performed yet.");
+        ResolveReferences();
+
+        if (projectionManager == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot complete pending near transfer because ProjectionManager is missing.", this);
+            return;
+        }
+
+        if (player == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot complete pending near transfer because Player Transform is missing.", this);
+            return;
+        }
+
+        Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
+        Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
+
+        if (!TryFindNearestLevelTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        {
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot complete pending near transfer. No nearest level area contains projected player anchor {playerProjectionPosition}.", this);
+            return;
+        }
+
+        Log($"Completing pending near transfer to '{targetWalkable.name}' at depth {targetDepth:0.00}. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}.");
+        if (ApplyDepthOnlyRelocation(targetDepth))
+            pendingNearTransfer = false;
     }
 
     private void ResolveReferences()
@@ -315,7 +379,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         return (state & disallowedStates) == 0;
     }
 
-    private bool TryFindSideAreaTargetDepth(
+    private bool TryFindNearestLevelTargetDepth(
         Vector2 playerProjectionPosition,
         out float targetDepth,
         out ProjectionWalkable targetWalkable)

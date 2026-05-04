@@ -235,16 +235,13 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         }
 
         RequestConstraintBypassThisFrame();
-        Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
-        Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
-
-        if (!TryFindNearestLevelTargetDepthInsideActivityRange(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        if (!TryFindNearestLevelCenterDepth(out float targetDepth, out ProjectionWalkable targetWalkable))
         {
-            Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot relocate from SideArea. No current-view level area contains projected player anchor {playerProjectionPosition}.", this);
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot relocate from SideArea. No current-view nearest level depth was found.", this);
             return false;
         }
 
-        Log($"Relocating from SideArea to '{targetWalkable.name}' at depth {targetDepth:0.00}.");
+        Log($"Relocating from SideArea to nearest level '{targetWalkable.name}' at depth {targetDepth:0.00}.");
         bool relocated = ApplyDepthOnlyRelocation(targetDepth);
         Log($"SideArea ApplyDepthOnlyRelocation success: {relocated}.");
         if (relocated)

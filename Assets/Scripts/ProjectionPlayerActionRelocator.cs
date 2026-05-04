@@ -212,6 +212,32 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         return false;
     }
 
+    public bool ApplyDepthOnlyRelocation(float targetDepth)
+    {
+        ResolveReferences();
+
+        if (projectionManager == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot apply depth-only relocation because ProjectionManager is missing.", this);
+            return false;
+        }
+
+        if (player == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot apply depth-only relocation because Player Transform is missing.", this);
+            return false;
+        }
+
+        Vector3 currentAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
+        Vector2 currentProjectionPosition = projectionManager.WorldToProjection2D(currentAnchorWorldPosition);
+        Vector3 targetAnchorWorldPosition = projectionManager.Projection2DToWorld(currentProjectionPosition, targetDepth);
+
+        MovePlayerByWorldDelta(targetAnchorWorldPosition - currentAnchorWorldPosition);
+
+        Log($"Applied depth-only relocation. Anchor projection 2D: {currentProjectionPosition}. Target depth: {targetDepth:0.00}. Anchor from: {currentAnchorWorldPosition}. Anchor to: {targetAnchorWorldPosition}.");
+        return true;
+    }
+
     public void UpdatePendingNearTransfer()
     {
         if (!pendingNearTransfer)
@@ -244,6 +270,34 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     private float EvaluateOcclusionRatio()
     {
         return 0f;
+    }
+
+    private Vector3 GetPlayerProjectionAnchorWorldPosition()
+    {
+        CharacterController characterController = player.GetComponent<CharacterController>();
+        if (characterController == null)
+            return player.position;
+
+        Vector3 center = player.TransformPoint(characterController.center);
+        float halfHeight = Mathf.Max(0f, characterController.height * Mathf.Abs(player.lossyScale.y) * 0.5f);
+        return center + Vector3.down * halfHeight;
+    }
+
+    private void MovePlayerByWorldDelta(Vector3 worldDelta)
+    {
+        if (worldDelta.sqrMagnitude < 0.0000001f)
+            return;
+
+        CharacterController characterController = player.GetComponent<CharacterController>();
+        bool controllerWasEnabled = characterController != null && characterController.enabled;
+
+        if (controllerWasEnabled)
+            characterController.enabled = false;
+
+        player.position += worldDelta;
+
+        if (controllerWasEnabled)
+            characterController.enabled = true;
     }
 
     private ProjectionViewMask GetWalkableActiveViews(ProjectionWalkable walkable)

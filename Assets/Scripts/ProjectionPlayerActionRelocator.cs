@@ -222,7 +222,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
         Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
 
-        if (!TryFindNearestLevelTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        if (!TryFindNearestLevelTargetDepthInsideActivityRange(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
         {
             Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot relocate from SideArea. No current-view level area contains projected player anchor {playerProjectionPosition}.", this);
             return false;
@@ -270,12 +270,9 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return false;
         }
 
-        Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
-        Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
-
-        if (!TryFindNearestLevelTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        if (!TryFindNearestLevelDepthForSameProjectionPoint(out float targetDepth, out ProjectionWalkable targetWalkable))
         {
-            Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot relocate from FarArea. No nearest level area contains projected player anchor {playerProjectionPosition}.", this);
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot relocate from FarArea. No current-view nearest level depth was found.", this);
             return false;
         }
 
@@ -336,12 +333,9 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return;
         }
 
-        Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
-        Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
-
-        if (!TryFindNearestLevelTargetDepth(playerProjectionPosition, out float targetDepth, out ProjectionWalkable targetWalkable))
+        if (!TryFindNearestLevelDepthForSameProjectionPoint(out float targetDepth, out ProjectionWalkable targetWalkable))
         {
-            Debug.LogWarning($"[ProjectionPlayerActionRelocator] Cannot complete pending near transfer. No nearest level area contains projected player anchor {playerProjectionPosition}.", this);
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot complete pending near transfer. No current-view nearest level depth was found.", this);
             return;
         }
 
@@ -364,6 +358,13 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             if (playerController != null)
                 player = playerController.transform;
         }
+    }
+
+    public bool ShouldBypassProjectionWalkableConstraint()
+    {
+        return pendingNearTransfer ||
+            (CurrentAreaState & PlayerProjectionAreaState.SideArea) != 0 ||
+            (CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0;
     }
 
     private float EvaluateOcclusionRatio()
@@ -561,7 +562,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         return (state & disallowedStates) == 0;
     }
 
-    private bool TryFindNearestLevelTargetDepth(
+    private bool TryFindNearestLevelTargetDepthInsideActivityRange(
         Vector2 playerProjectionPosition,
         out float targetDepth,
         out ProjectionWalkable targetWalkable)
@@ -594,6 +595,46 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             if (!ContainsProjectionPoint(projectionRect, playerProjectionPosition))
                 continue;
 
+            float layerDistance = GetDistanceFromCameraAlongView(bounds.center);
+            if (targetWalkable != null && layerDistance >= bestLayerDistance)
+                continue;
+
+            targetWalkable = walkable;
+            bestLayerDistance = layerDistance;
+            targetDepth = projectionManager.WorldToProjectionDepth(bounds.center);
+        }
+
+        return targetWalkable != null;
+    }
+
+    private bool TryFindNearestLevelDepthForSameProjectionPoint(
+        out float targetDepth,
+        out ProjectionWalkable targetWalkable)
+    {
+        targetDepth = 0f;
+        targetWalkable = null;
+
+        ProjectionView currentView = projectionManager.CurrentView;
+        ProjectionViewMask currentViewMask = ProjectionViewUtility.ToMask(currentView);
+        ProjectionWalkable[] walkables = FindObjectsByType<ProjectionWalkable>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        float bestLayerDistance = float.PositiveInfinity;
+
+        for (int i = 0; i < walkables.Length; i++)
+        {
+            ProjectionWalkable walkable = walkables[i];
+            if (walkable == null ||
+                !walkable.isActiveAndEnabled ||
+                !walkable.CanProjectInView(currentView))
+                continue;
+
+            ProjectionViewMask activeViews = GetWalkableActiveViews(walkable);
+            if (!IsCurrentViewLevelArea(activeViews, currentViewMask, walkable.alwaysProjected))
+                continue;
+
+            Bounds bounds = walkable.GetProjectionBounds();
             float layerDistance = GetDistanceFromCameraAlongView(bounds.center);
             if (targetWalkable != null && layerDistance >= bestLayerDistance)
                 continue;

@@ -387,6 +387,9 @@ public class PlayerController : MonoBehaviour
             projectionCollider == null)
             return;
 
+        if (ShouldBypassProjectionWalkableConstraint())
+            return;
+
         if (!TryGetNearbyWalkableHorizontalRange(out float minX, out float maxX))
             return;
 
@@ -593,6 +596,9 @@ public class PlayerController : MonoBehaviour
         if (!constrainToWalkableArea)
             return;
 
+        if (ShouldBypassProjectionWalkableConstraint())
+            return;
+
         Vector3 feetPosition = GetFeetWorldPosition();
 
         ProjectionWalkable[] walkables = FindObjectsByType<ProjectionWalkable>(
@@ -660,6 +666,13 @@ public class PlayerController : MonoBehaviour
                 projectionBody.velocity = new Vector2(0f, projectionBody.velocity.y);
             }
         }
+    }
+
+    bool ShouldBypassProjectionWalkableConstraint()
+    {
+        ResolveProjectionReferences();
+        return playerActionRelocator != null &&
+            playerActionRelocator.ShouldBypassProjectionWalkableConstraint();
     }
 
     public void HandleProjectionTriggerEnter(Collider2D other)

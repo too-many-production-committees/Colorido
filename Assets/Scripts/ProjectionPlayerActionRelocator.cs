@@ -39,6 +39,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     private float currentOcclusionRatio;
     private ProjectionView recordedView;
     private int bypassConstraintUntilFrame = -1;
+    private bool actionRelocationAttemptedForCurrentArea;
+    private PlayerProjectionAreaState actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
 
     void Awake()
     {
@@ -66,6 +68,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             : ProjectionView.Front;
         CurrentAreaState = EvaluatePlayerAreaState();
         pendingNearTransfer = false;
+        actionRelocationAttemptedForCurrentArea = false;
+        actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
 
         Log($"Camera rotation complete. Recorded view: {recordedView}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}.");
     }
@@ -83,17 +87,43 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         bool shouldRequestBypass =
             (CurrentAreaState & PlayerProjectionAreaState.SideArea) != 0 ||
             (CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0;
-        if (shouldRequestBypass)
-            RequestConstraintBypassThisFrame();
 
-        Debug.LogWarning($"[ProjectionPlayerActionRelocator] Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}. Bypass requested: {shouldRequestBypass}.", this);
+        if (actionRelocationAttemptedForCurrentArea &&
+            CurrentAreaState != actionRelocationAttemptedAreaState)
+        {
+            actionRelocationAttemptedForCurrentArea = false;
+            actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
+        }
+
+        if ((CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
+        {
+            actionRelocationAttemptedForCurrentArea = false;
+            actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
+        }
+
+        Debug.LogWarning($"[ProjectionPlayerActionRelocator] Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}. Needs relocation: {shouldRequestBypass}. Already attempted: {actionRelocationAttemptedForCurrentArea}.", this);
 
         if ((CurrentAreaState & PlayerProjectionAreaState.CommonArea) != 0 &&
             (CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
         {
             pendingNearTransfer = false;
+            actionRelocationAttemptedForCurrentArea = false;
+            actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             Log("Player is already in a near common area. Relocation skipped.");
             return;
+        }
+
+        if (shouldRequestBypass)
+        {
+            if (actionRelocationAttemptedForCurrentArea)
+            {
+                Debug.LogWarning($"[ProjectionPlayerActionRelocator] Action relocation already attempted for current area state {CurrentAreaState}; skipping repeat bypass and relocation.", this);
+                return;
+            }
+
+            actionRelocationAttemptedForCurrentArea = true;
+            actionRelocationAttemptedAreaState = CurrentAreaState;
+            RequestConstraintBypassThisFrame();
         }
 
         if (IsPureSideArea(CurrentAreaState))
@@ -247,6 +277,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         if (relocated)
         {
             RequestConstraintBypassThisFrame();
+            actionRelocationAttemptedForCurrentArea = false;
+            actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             CurrentAreaState = EvaluatePlayerAreaState();
         }
 
@@ -266,6 +298,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         if ((CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
         {
             pendingNearTransfer = false;
+            actionRelocationAttemptedForCurrentArea = false;
+            actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             Debug.LogWarning($"[ProjectionPlayerActionRelocator] FarArea relocation skipped because player is already on the nearest level. Current state: {CurrentAreaState}.", this);
             return false;
         }
@@ -304,6 +338,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         {
             pendingNearTransfer = false;
             RequestConstraintBypassThisFrame();
+            actionRelocationAttemptedForCurrentArea = false;
+            actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             CurrentAreaState = EvaluatePlayerAreaState();
         }
 
@@ -371,6 +407,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         {
             pendingNearTransfer = false;
             RequestConstraintBypassThisFrame();
+            actionRelocationAttemptedForCurrentArea = false;
+            actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             CurrentAreaState = EvaluatePlayerAreaState();
         }
     }

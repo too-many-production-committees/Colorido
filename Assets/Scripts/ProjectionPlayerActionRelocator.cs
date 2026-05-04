@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [Flags]
@@ -23,6 +24,9 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     [Header("Occlusion")]
     [Range(0f, 1f)]
     public float occlusionThreshold = 0.5f;
+    [Range(1, 64)]
+    public int occlusionSampleResolution = 16;
+    public float occlusionDepthTolerance = 0.01f;
 
     [Header("Debug")]
     public bool logStateChanges = true;
@@ -43,6 +47,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     void OnValidate()
     {
         occlusionThreshold = Mathf.Clamp01(occlusionThreshold);
+        occlusionSampleResolution = Mathf.Max(1, occlusionSampleResolution);
+        occlusionDepthTolerance = Mathf.Max(0f, occlusionDepthTolerance);
     }
 
     void Update()
@@ -362,7 +368,183 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
     private float EvaluateOcclusionRatio()
     {
-        return 0f;
+        ResolveReferences();
+
+        if (projectionManager == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot evaluate occlusion because ProjectionManager is missing.", this);
+            return 0f;
+        }
+
+        if (player == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot evaluate occlusion because Player Transform is missing.", this);
+            return 0f;
+        }
+
+        if (!TryGetProjectionCamera(out Camera projectionCamera))
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot evaluate occlusion because projection camera is missing.", this);
+            return 0f;
+        }
+
+        if (!TryGetPlayerBounds(out Bounds playerBounds))
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot evaluate occlusion because Player has no CharacterController, Collider, or Renderer bounds.", this);
+            return 0f;
+        }
+
+        Rect playerProjectionRect = GetProjectedBoundsRect(playerBounds);
+        if (playerProjectionRect.width <= 0f || playerProjectionRect.height <= 0f)
+            return 0f;
+
+        float playerDistance = GetDistanceFromCameraAlongView(
+            playerBounds.center,
+            projectionCamera.transform);
+        List<Rect> occluderProjectionRects = CollectOccluderProjectionRects(
+            playerProjectionRect,
+            playerDistance,
+            projectionCamera.transform);
+
+        if (occluderProjectionRects.Count == 0)
+            return 0f;
+
+        int resolution = Mathf.Max(1, occlusionSampleResolution);
+        int totalSamples = resolution * resolution;
+        int occludedSamples = 0;
+        Vector2 sampleStep = new Vector2(
+            playerProjectionRect.width / resolution,
+            playerProjectionRect.height / resolution);
+
+        for (int y = 0; y < resolution; y++)
+        {
+            for (int x = 0; x < resolution; x++)
+            {
+                Vector2 samplePoint = new Vector2(
+                    playerProjectionRect.xMin + sampleStep.x * (x + 0.5f),
+                    playerProjectionRect.yMin + sampleStep.y * (y + 0.5f));
+
+                if (IsSampleOccluded(samplePoint, occluderProjectionRects))
+                    occludedSamples++;
+            }
+        }
+
+        if (totalSamples <= 0)
+            return 0f;
+
+        return Mathf.Clamp01((float)occludedSamples / totalSamples);
+    }
+
+    private bool TryGetPlayerBounds(out Bounds bounds)
+    {
+        bounds = default;
+
+        CharacterController characterController = player.GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            bounds = characterController.bounds;
+            return true;
+        }
+
+        Collider playerCollider = player.GetComponent<Collider>();
+        if (playerCollider != null)
+        {
+            bounds = playerCollider.bounds;
+            return true;
+        }
+
+        Renderer playerRenderer = player.GetComponent<Renderer>();
+        if (playerRenderer != null)
+        {
+            bounds = playerRenderer.bounds;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryGetProjectionCamera(out Camera projectionCamera)
+    {
+        projectionCamera = null;
+
+        if (projectionManager != null && projectionManager.projectionCamera != null)
+            projectionCamera = projectionManager.projectionCamera;
+        else
+            projectionCamera = Camera.main;
+
+        return projectionCamera != null;
+    }
+
+    private List<Rect> CollectOccluderProjectionRects(
+        Rect playerProjectionRect,
+        float playerDistance,
+        Transform projectionCameraTransform)
+    {
+        List<Rect> occluderProjectionRects = new List<Rect>();
+        ProjectionOccluder[] occluders = FindObjectsByType<ProjectionOccluder>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < occluders.Length; i++)
+        {
+            ProjectionOccluder occluder = occluders[i];
+            if (occluder == null ||
+                !occluder.participateInOcclusion ||
+                IsPlayerOrPlayerChild(occluder.transform))
+                continue;
+
+            if (!occluder.TryGetBounds(out Bounds occluderBounds))
+                continue;
+
+            float occluderDistance = GetDistanceFromCameraAlongView(
+                occluderBounds.center,
+                projectionCameraTransform);
+            if (occluderDistance < -occlusionDepthTolerance ||
+                occluderDistance >= playerDistance - occlusionDepthTolerance)
+                continue;
+
+            Rect occluderProjectionRect = GetProjectedBoundsRect(occluderBounds);
+            if (!ProjectionRectsOverlap(playerProjectionRect, occluderProjectionRect))
+                continue;
+
+            occluderProjectionRects.Add(occluderProjectionRect);
+        }
+
+        return occluderProjectionRects;
+    }
+
+    private bool IsPlayerOrPlayerChild(Transform target)
+    {
+        return target != null && player != null &&
+            (target == player || target.IsChildOf(player));
+    }
+
+    private float GetDistanceFromCameraAlongView(
+        Vector3 worldPosition,
+        Transform projectionCameraTransform)
+    {
+        return Vector3.Dot(
+            worldPosition - projectionCameraTransform.position,
+            projectionManager.viewForward);
+    }
+
+    private bool ProjectionRectsOverlap(Rect a, Rect b)
+    {
+        return a.xMin < b.xMax &&
+            a.xMax > b.xMin &&
+            a.yMin < b.yMax &&
+            a.yMax > b.yMin;
+    }
+
+    private bool IsSampleOccluded(Vector2 samplePoint, List<Rect> occluderProjectionRects)
+    {
+        for (int i = 0; i < occluderProjectionRects.Count; i++)
+        {
+            if (occluderProjectionRects[i].Contains(samplePoint))
+                return true;
+        }
+
+        return false;
     }
 
     private bool IsPureSideArea(PlayerProjectionAreaState state)

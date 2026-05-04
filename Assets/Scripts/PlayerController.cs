@@ -83,11 +83,15 @@ public class PlayerController : MonoBehaviour
             return;
 
         projectionManager.UpdateProjectionAxes();
+        Vector2 preservedVelocity = projectionBody.velocity;
         projectionBody.position = projectionManager.WorldToProjection2D(GetFeetWorldPosition());
-        projectionBody.velocity = Vector2.zero;
         if (!snapToWalkable)
+        {
+            projectionBody.velocity = preservedVelocity;
             return;
+        }
 
+        projectionBody.velocity = Vector2.zero;
         SnapProjectionBodyToNearestWalkableIfNeeded();
         velocity = Vector3.zero;
         jumpsRemaining = Mathf.Max(1, maxJumpCount);

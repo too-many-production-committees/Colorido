@@ -86,7 +86,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         if (shouldRequestBypass)
             RequestConstraintBypassThisFrame();
 
-        Log($"Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}. Bypass requested: {shouldRequestBypass}.");
+        Debug.LogWarning($"[ProjectionPlayerActionRelocator] Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}. Bypass requested: {shouldRequestBypass}.", this);
 
         if ((CurrentAreaState & PlayerProjectionAreaState.CommonArea) != 0 &&
             (CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
@@ -104,7 +104,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         if ((CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0)
         {
-            Log("Trying FarArea relocation after player action input.");
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Trying FarArea relocation after player action input.", this);
             TryRelocateFromFarArea();
         }
     }
@@ -262,14 +262,14 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         if ((CurrentAreaState & PlayerProjectionAreaState.FarArea) == 0)
         {
-            Log($"FarArea relocation skipped. Current state is not FarArea: {CurrentAreaState}.");
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] FarArea relocation skipped. Current state is not FarArea: {CurrentAreaState}.", this);
             return false;
         }
 
         if ((CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
         {
             pendingNearTransfer = false;
-            Log($"FarArea relocation skipped because player is already on the nearest level. Current state: {CurrentAreaState}.");
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] FarArea relocation skipped because player is already on the nearest level. Current state: {CurrentAreaState}.", this);
             return false;
         }
 
@@ -290,7 +290,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         if (currentOcclusionRatio >= occlusionThreshold)
         {
             pendingNearTransfer = true;
-            Log($"Far area relocation delayed. Occlusion {currentOcclusionRatio:0.00} >= threshold {occlusionThreshold:0.00}.");
+            Debug.LogWarning($"[ProjectionPlayerActionRelocator] FarArea relocation delayed. Occlusion {currentOcclusionRatio:0.00} >= threshold {occlusionThreshold:0.00}.", this);
             return false;
         }
 
@@ -300,9 +300,9 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return false;
         }
 
-        Log($"FarArea target selected: '{targetWalkable.name}', targetDepth: {targetDepth:0.00}. Applying depth-only relocation. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}.");
+        Debug.LogWarning($"[ProjectionPlayerActionRelocator] FarArea target selected: '{targetWalkable.name}', targetDepth: {targetDepth:0.00}. Applying depth-only relocation. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}.", this);
         bool relocated = ApplyDepthOnlyRelocation(targetDepth);
-        Log($"FarArea ApplyDepthOnlyRelocation success: {relocated}.");
+        Debug.LogWarning($"[ProjectionPlayerActionRelocator] FarArea ApplyDepthOnlyRelocation success: {relocated}.", this);
         if (relocated)
         {
             pendingNearTransfer = false;
@@ -334,6 +334,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         Vector3 targetAnchorWorldPosition = projectionManager.Projection2DToWorld(currentProjectionPosition, targetDepth);
 
         MovePlayerByWorldDelta(targetAnchorWorldPosition - currentAnchorWorldPosition);
+        SyncProjectionBodyToRelocatedPlayer();
 
         Log($"Applied depth-only relocation. Anchor projection 2D: {currentProjectionPosition}. Target depth: {targetDepth:0.00}. Anchor from: {currentAnchorWorldPosition}. Anchor to: {targetAnchorWorldPosition}.");
         return true;
@@ -396,8 +397,6 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     public bool ShouldBypassProjectionWalkableConstraint()
     {
         return pendingNearTransfer ||
-            (CurrentAreaState & PlayerProjectionAreaState.SideArea) != 0 ||
-            (CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0 ||
             Time.frameCount <= bypassConstraintUntilFrame;
     }
 
@@ -741,6 +740,21 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         if (controllerWasEnabled)
             characterController.enabled = true;
+    }
+
+    private void SyncProjectionBodyToRelocatedPlayer()
+    {
+        PlayerController playerController = player.GetComponent<PlayerController>();
+        if (playerController == null)
+            playerController = FindFirstObjectByType<PlayerController>();
+
+        if (playerController == null)
+        {
+            Debug.LogWarning("[ProjectionPlayerActionRelocator] Depth-only relocation succeeded, but PlayerController was not found for projection body sync.", this);
+            return;
+        }
+
+        playerController.SyncWorldToProjectionBody(false);
     }
 
     private ProjectionViewMask GetWalkableActiveViews(ProjectionWalkable walkable)

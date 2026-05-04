@@ -1,10 +1,14 @@
+using System;
 using UnityEngine;
 using System.Collections;
 
 public class FezCameraController : MonoBehaviour
 {
+    public event Action OnCameraRotateFinished;
+
     public float rotateDuration = 0.45f;
     public ProjectionManager projectionManager;
+    public bool snapPlayerAfterRotate = false;
     public BackgroundBox backgroundBox;
     public Camera controlledCamera;
     public Transform player;
@@ -14,9 +18,9 @@ public class FezCameraController : MonoBehaviour
     public float firstPersonFieldOfView = 65f;
     public bool showDebugViewButton = true;
     public Vector3 platformFollowOffset = Vector3.zero;
-    public float platformFollowStrength = 0.35f;
-    public float platformFollowSmoothTime = 0.18f;
-    public bool platformFollowVertical = false;
+    public float platformFollowStrength = 0.65f;
+    public float platformFollowSmoothTime = 0.12f;
+    public bool platformFollowVertical = true;
     public float viewArcHeight = 1.2f;
     public float viewPullBackDistance = 1.5f;
     public float rotationCameraPush = 1.5f;
@@ -97,7 +101,7 @@ public class FezCameraController : MonoBehaviour
         if (firstPerson || switchingView) return;
         if (rotating) return;
 
-        if (projectionManager != null)
+        if (snapPlayerAfterRotate && projectionManager != null)
             projectionManager.CacheBeforeRotate();
 
         currentIndex = (currentIndex + 1) % 4;
@@ -126,7 +130,7 @@ public class FezCameraController : MonoBehaviour
         if (firstPerson || switchingView) return;
         if (rotating) return;
 
-        if (projectionManager != null)
+        if (snapPlayerAfterRotate && projectionManager != null)
             projectionManager.CacheBeforeRotate();
 
         currentIndex = (currentIndex + 3) % 4;
@@ -163,8 +167,10 @@ public class FezCameraController : MonoBehaviour
         ApplyBackgroundMotion(0f);
         rotating = false;
 
-        if (projectionManager != null)
+        if (snapPlayerAfterRotate && projectionManager != null)
             projectionManager.TrySnapPlayer();
+
+        OnCameraRotateFinished?.Invoke();
     }
 
     public void ToggleViewMode()

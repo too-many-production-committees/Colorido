@@ -70,16 +70,7 @@ public class BackgroundBox : MonoBehaviour
         container.rotation = Quaternion.identity;
         containerObject.hideFlags = HideFlags.DontSave;
 
-        Vector3 size = Vector3.one * cubeSize;
-
-        CreateWall(container, "back", new Vector3(0f, 0f, size.z * 0.5f), new Vector3(size.x, size.y, wallThickness), CreateMaterial(backBrightness));
-        CreateWall(container, "front", new Vector3(0f, 0f, -size.z * 0.5f), new Vector3(size.x, size.y, wallThickness), CreateMaterial(frontBrightness));
-        CreateWall(container, "left", new Vector3(-size.x * 0.5f, 0f, 0f), new Vector3(wallThickness, size.y, size.z), CreateMaterial(leftBrightness));
-        CreateWall(container, "right", new Vector3(size.x * 0.5f, 0f, 0f), new Vector3(wallThickness, size.y, size.z), CreateMaterial(rightBrightness));
-        CreateWall(container, "ceiling", new Vector3(0f, size.y * 0.5f, 0f), new Vector3(size.x, wallThickness, size.z), CreateMaterial(ceilingBrightness));
-
-        if (includeFloor)
-            CreateWall(container, "floor", new Vector3(0f, -size.y * 0.5f, 0f), new Vector3(size.x, wallThickness, size.z), CreateMaterial(floorBrightness));
+        CreateCube(container);
     }
 
     Material CreateMaterial(float brightness)
@@ -94,22 +85,68 @@ public class BackgroundBox : MonoBehaviour
         return material;
     }
 
-    void CreateWall(Transform parent, string wallName, Vector3 localPosition, Vector3 scale, Material material)
+    void CreateCube(Transform parent)
     {
-        GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        wall.name = wallName;
-        wall.transform.SetParent(parent, false);
-        wall.transform.localPosition = localPosition;
-        wall.transform.localScale = scale;
-        wall.hideFlags = HideFlags.DontSave;
+        GameObject cube = new GameObject("background_cube");
+        cube.transform.SetParent(parent, false);
+        cube.transform.localPosition = Vector3.zero;
+        cube.transform.localRotation = Quaternion.identity;
+        cube.transform.localScale = Vector3.one;
+        cube.hideFlags = HideFlags.DontSave;
 
-        Collider wallCollider = wall.GetComponent<Collider>();
-        if (wallCollider != null)
-            DestroyObject(wallCollider);
+        MeshFilter meshFilter = cube.AddComponent<MeshFilter>();
+        MeshRenderer renderer = cube.AddComponent<MeshRenderer>();
+        meshFilter.sharedMesh = CreateInsideCubeMesh(cubeSize);
 
-        Renderer renderer = wall.GetComponent<Renderer>();
         if (renderer != null)
-            renderer.sharedMaterial = material;
+        {
+            renderer.sharedMaterials = new[]
+            {
+                CreateMaterial(backBrightness),
+                CreateMaterial(frontBrightness),
+                CreateMaterial(leftBrightness),
+                CreateMaterial(rightBrightness),
+                CreateMaterial(ceilingBrightness),
+                CreateMaterial(floorBrightness)
+            };
+        }
+    }
+
+    Mesh CreateInsideCubeMesh(float size)
+    {
+        float h = size * 0.5f;
+        Mesh mesh = new Mesh();
+        mesh.name = "BackgroundBox_InsideCube";
+
+        Vector3[] vertices =
+        {
+            new Vector3(-h, -h, h), new Vector3(h, -h, h), new Vector3(h, h, h), new Vector3(-h, h, h),
+            new Vector3(h, -h, -h), new Vector3(-h, -h, -h), new Vector3(-h, h, -h), new Vector3(h, h, -h),
+            new Vector3(-h, -h, -h), new Vector3(-h, -h, h), new Vector3(-h, h, h), new Vector3(-h, h, -h),
+            new Vector3(h, -h, h), new Vector3(h, -h, -h), new Vector3(h, h, -h), new Vector3(h, h, h),
+            new Vector3(-h, h, h), new Vector3(h, h, h), new Vector3(h, h, -h), new Vector3(-h, h, -h),
+            new Vector3(-h, -h, -h), new Vector3(h, -h, -h), new Vector3(h, -h, h), new Vector3(-h, -h, h)
+        };
+
+        int[][] triangles =
+        {
+            new[] { 0, 2, 1, 0, 3, 2 },
+            new[] { 4, 6, 5, 4, 7, 6 },
+            new[] { 8, 10, 9, 8, 11, 10 },
+            new[] { 12, 14, 13, 12, 15, 14 },
+            new[] { 16, 18, 17, 16, 19, 18 },
+            new[] { 20, 22, 21, 20, 23, 22 }
+        };
+
+        mesh.vertices = vertices;
+        mesh.subMeshCount = triangles.Length;
+
+        for (int i = 0; i < triangles.Length; i++)
+            mesh.SetTriangles(triangles[i], i);
+
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        return mesh;
     }
 
     void DestroyObject(Object target)

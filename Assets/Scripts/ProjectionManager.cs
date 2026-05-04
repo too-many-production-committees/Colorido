@@ -12,6 +12,7 @@ public class ProjectionManager : MonoBehaviour
     CharacterController controller;
 
     Transform cachedPlatform;
+    float cachedPlatformHorizontalT = 0.5f;
 
     void Awake()
     {
@@ -28,6 +29,17 @@ public class ProjectionManager : MonoBehaviour
             return;
 
         cachedPlatform = GetCurrentPlatform();
+        if (cachedPlatform == null)
+            return;
+
+        int direction = cameraController.CurrentIndex();
+        Rect platformRect = GetProjectedRect(cachedPlatform, direction);
+        float playerHorizontal = ProjectHorizontal(player.position, direction);
+
+        cachedPlatformHorizontalT = Mathf.Approximately(platformRect.width, 0f)
+            ? 0.5f
+            : Mathf.InverseLerp(platformRect.xMin, platformRect.xMax, playerHorizontal);
+        cachedPlatformHorizontalT = Mathf.Clamp01(cachedPlatformHorizontalT);
     }
 
     public void TrySnapPlayer()
@@ -45,7 +57,8 @@ public class ProjectionManager : MonoBehaviour
             controller = player.GetComponent<CharacterController>();
 
         int direction = cameraController.CurrentIndex();
-        float playerHorizontal = ProjectHorizontal(player.position, direction);
+        Rect sourceRect = GetProjectedRect(cachedPlatform, direction);
+        float playerHorizontal = Mathf.Lerp(sourceRect.xMin, sourceRect.xMax, cachedPlatformHorizontalT);
 
         Transform targetPlatform = FindOverlappingPlatform(cachedPlatform, playerHorizontal);
         if (targetPlatform == null)
@@ -55,6 +68,8 @@ public class ProjectionManager : MonoBehaviour
         }
 
         Vector3 p = player.position;
+        Rect targetRect = GetProjectedRect(targetPlatform, direction);
+        playerHorizontal = Mathf.Lerp(targetRect.xMin, targetRect.xMax, cachedPlatformHorizontalT);
 
         if (direction == 0 || direction == 2)
         {

@@ -10,12 +10,20 @@ public class PlayerBillboardVisual : MonoBehaviour
     public Vector3 localOffset = new Vector3(0f, 0.85f, 0f);
     public Color tint = Color.white;
     public bool hideOriginalMesh = true;
+    public bool showOccludedShadow = true;
+    public Color occludedShadowColor = new Color(0.05f, 0.08f, 0.14f, 0.55f);
+    public float occludedShadowScale = 1.08f;
+    public float occludedShadowAlphaCutoff = 0.1f;
 
     private const string VisualName = "player_billboard_visual";
+    private const string ShadowName = "player_occluded_shadow";
 
     private Transform visual;
+    private Transform shadowVisual;
     private MeshRenderer visualRenderer;
+    private MeshRenderer shadowRenderer;
     private Material material;
+    private Material shadowMaterial;
 
     void OnEnable()
     {
@@ -69,6 +77,8 @@ public class PlayerBillboardVisual : MonoBehaviour
             material.name = "PlayerBillboardMaterial";
             visualRenderer.sharedMaterial = material;
         }
+
+        EnsureShadowVisual();
     }
 
     void ApplySettings()
@@ -79,10 +89,27 @@ public class PlayerBillboardVisual : MonoBehaviour
         visual.localPosition = localOffset;
         visual.localScale = new Vector3(size.x, size.y, 1f);
 
+        if (shadowVisual != null)
+        {
+            shadowVisual.gameObject.SetActive(showOccludedShadow);
+            shadowVisual.localPosition = localOffset;
+            shadowVisual.localScale = new Vector3(
+                size.x * occludedShadowScale,
+                size.y * occludedShadowScale,
+                1f);
+        }
+
         if (material != null)
         {
             material.mainTexture = texture;
             material.color = tint;
+        }
+
+        if (shadowMaterial != null)
+        {
+            shadowMaterial.mainTexture = texture;
+            shadowMaterial.color = occludedShadowColor;
+            shadowMaterial.SetFloat("_AlphaCutoff", occludedShadowAlphaCutoff);
         }
 
         if (hideOriginalMesh)
@@ -108,6 +135,43 @@ public class PlayerBillboardVisual : MonoBehaviour
             forward = -targetCamera.transform.forward;
 
         visual.rotation = Quaternion.LookRotation(forward.normalized, Vector3.up);
+        if (shadowVisual != null)
+            shadowVisual.rotation = visual.rotation;
+    }
+
+    void EnsureShadowVisual()
+    {
+        if (shadowVisual == null)
+        {
+            Transform existing = transform.Find(ShadowName);
+            if (existing != null)
+                shadowVisual = existing;
+        }
+
+        if (shadowVisual == null)
+        {
+            GameObject shadowObject = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            shadowObject.name = ShadowName;
+            shadowObject.transform.SetParent(transform, false);
+
+            Collider shadowCollider = shadowObject.GetComponent<Collider>();
+            if (shadowCollider != null)
+                DestroyObject(shadowCollider);
+
+            shadowVisual = shadowObject.transform;
+        }
+
+        shadowRenderer = shadowVisual.GetComponent<MeshRenderer>();
+        if (shadowRenderer != null && shadowMaterial == null)
+        {
+            Shader shader = Shader.Find("Custom/Billboard Occluded Shadow");
+            if (shader == null)
+                shader = Shader.Find("Unlit/Transparent");
+
+            shadowMaterial = new Material(shader);
+            shadowMaterial.name = "PlayerOccludedShadowMaterial";
+            shadowRenderer.sharedMaterial = shadowMaterial;
+        }
     }
 
     void DestroyObject(Object target)

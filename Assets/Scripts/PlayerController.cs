@@ -164,7 +164,7 @@ public class PlayerController : MonoBehaviour
         if (projectionBody == null)
             return;
 
-        float inputX = Input.GetAxisRaw("Horizontal");
+        float inputX = GetHorizontalInput();
         Vector2 bodyVelocity = projectionBody.velocity;
         bodyVelocity.x = inputX * moveSpeed;
 
@@ -202,7 +202,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         Vector3 right = cameraController.GetRight();
-        float inputX = Input.GetAxisRaw("Horizontal");
+        float inputX = GetHorizontalInput();
         Vector3 move = right * inputX;
 
         controller.Move(move * moveSpeed * Time.deltaTime);
@@ -246,7 +246,7 @@ public class PlayerController : MonoBehaviour
         if (playerActionRelocator == null)
             return;
 
-        bool hasMoveInput = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.01f ||
+        bool hasMoveInput = Mathf.Abs(GetHorizontalInput()) > 0.01f ||
             Input.GetKey(KeyCode.A) ||
             Input.GetKey(KeyCode.D) ||
             Input.GetKey(KeyCode.LeftArrow) ||
@@ -255,6 +255,19 @@ public class PlayerController : MonoBehaviour
             return;
 
         playerActionRelocator.OnPlayerActionInput(hasMoveInput, jumpPressedThisFrame);
+    }
+
+    private float GetHorizontalInput()
+    {
+        float input = Input.GetAxisRaw("Horizontal");
+
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+            input -= 1f;
+
+        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+            input += 1f;
+
+        return Mathf.Clamp(input, -1f, 1f);
     }
 
     bool CanJump()

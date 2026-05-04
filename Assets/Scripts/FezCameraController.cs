@@ -1,11 +1,17 @@
+using System;
 using UnityEngine;
 using System.Collections;
 
 public class FezCameraController : MonoBehaviour
 {
+    public event Action OnCameraRotateFinished;
+
     public float rotateDuration = 0.45f;
     public ProjectionManager projectionManager;
+    public ProjectionPhysicsBuilder projectionPhysicsBuilder;
+    public PlayerController playerController;
     public BackgroundBox backgroundBox;
+    public bool rotateBackgroundWithCamera = false;
     public Camera controlledCamera;
     public Transform player;
     public KeyCode viewToggleKey = KeyCode.F;
@@ -97,7 +103,7 @@ public class FezCameraController : MonoBehaviour
         if (firstPerson || switchingView) return;
         if (rotating) return;
 
-        if (projectionManager != null)
+        if (projectionManager != null && projectionManager.enablePlatformTransfer)
             projectionManager.CacheBeforeRotate();
 
         currentIndex = (currentIndex + 1) % 4;
@@ -126,7 +132,7 @@ public class FezCameraController : MonoBehaviour
         if (firstPerson || switchingView) return;
         if (rotating) return;
 
-        if (projectionManager != null)
+        if (projectionManager != null && projectionManager.enablePlatformTransfer)
             projectionManager.CacheBeforeRotate();
 
         currentIndex = (currentIndex + 3) % 4;
@@ -161,10 +167,21 @@ public class FezCameraController : MonoBehaviour
         transform.rotation = end;
         ApplyPlatformCameraMotion(platformCameraLocalPosition, platformCameraFieldOfView, 0f);
         ApplyBackgroundMotion(0f);
-        rotating = false;
 
         if (projectionManager != null)
+            projectionManager.UpdateProjectionAxes();
+
+        if (projectionPhysicsBuilder != null)
+            projectionPhysicsBuilder.Rebuild();
+
+        if (projectionManager != null && projectionManager.enablePlatformTransfer)
             projectionManager.TrySnapPlayer();
+
+        if (playerController != null)
+            playerController.SyncWorldToProjectionBody();
+
+        rotating = false;
+        OnCameraRotateFinished?.Invoke();
     }
 
     public void ToggleViewMode()
@@ -200,11 +217,19 @@ public class FezCameraController : MonoBehaviour
             controlledCamera = Camera.main;
 
         if (backgroundBox == null)
-            backgroundBox = FindObjectOfType<BackgroundBox>();
+            backgroundBox = FindFirstObjectByType<BackgroundBox>();
+
+        if (projectionManager == null)
+            projectionManager = FindFirstObjectByType<ProjectionManager>();
+
+        if (projectionPhysicsBuilder == null)
+            projectionPhysicsBuilder = FindFirstObjectByType<ProjectionPhysicsBuilder>();
+
+        if (playerController == null)
+            playerController = FindFirstObjectByType<PlayerController>();
 
         if (player == null)
         {
-            PlayerController playerController = FindObjectOfType<PlayerController>();
             if (playerController != null)
                 player = playerController.transform;
         }
@@ -353,7 +378,7 @@ public class FezCameraController : MonoBehaviour
 
     void ApplyBackgroundMotion(float pulse)
     {
-        if (backgroundBox == null)
+        if (!rotateBackgroundWithCamera || backgroundBox == null)
             return;
 
         backgroundBox.SetCameraYaw(transform.eulerAngles.y, pulse);

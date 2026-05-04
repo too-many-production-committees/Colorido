@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 [ExecuteAlways]
 public class BackgroundBox : MonoBehaviour
@@ -71,15 +72,10 @@ public class BackgroundBox : MonoBehaviour
         containerObject.hideFlags = HideFlags.DontSave;
 
         Vector3 size = Vector3.one * cubeSize;
-
-        CreateWall(container, "back", new Vector3(0f, 0f, size.z * 0.5f), new Vector3(size.x, size.y, wallThickness), CreateMaterial(backBrightness));
-        CreateWall(container, "front", new Vector3(0f, 0f, -size.z * 0.5f), new Vector3(size.x, size.y, wallThickness), CreateMaterial(frontBrightness));
-        CreateWall(container, "left", new Vector3(-size.x * 0.5f, 0f, 0f), new Vector3(wallThickness, size.y, size.z), CreateMaterial(leftBrightness));
-        CreateWall(container, "right", new Vector3(size.x * 0.5f, 0f, 0f), new Vector3(wallThickness, size.y, size.z), CreateMaterial(rightBrightness));
-        CreateWall(container, "ceiling", new Vector3(0f, size.y * 0.5f, 0f), new Vector3(size.x, wallThickness, size.z), CreateMaterial(ceilingBrightness));
-
-        if (includeFloor)
-            CreateWall(container, "floor", new Vector3(0f, -size.y * 0.5f, 0f), new Vector3(size.x, wallThickness, size.z), CreateMaterial(floorBrightness));
+        MeshFilter meshFilter = containerObject.AddComponent<MeshFilter>();
+        MeshRenderer meshRenderer = containerObject.AddComponent<MeshRenderer>();
+        meshFilter.sharedMesh = CreateBackgroundMesh(size);
+        meshRenderer.sharedMaterials = CreateMaterials();
     }
 
     Material CreateMaterial(float brightness)
@@ -94,22 +90,118 @@ public class BackgroundBox : MonoBehaviour
         return material;
     }
 
-    void CreateWall(Transform parent, string wallName, Vector3 localPosition, Vector3 scale, Material material)
+    Material[] CreateMaterials()
     {
-        GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        wall.name = wallName;
-        wall.transform.SetParent(parent, false);
-        wall.transform.localPosition = localPosition;
-        wall.transform.localScale = scale;
-        wall.hideFlags = HideFlags.DontSave;
+        List<Material> materials = new List<Material>
+        {
+            CreateMaterial(backBrightness),
+            CreateMaterial(frontBrightness),
+            CreateMaterial(leftBrightness),
+            CreateMaterial(rightBrightness),
+            CreateMaterial(ceilingBrightness)
+        };
 
-        Collider wallCollider = wall.GetComponent<Collider>();
-        if (wallCollider != null)
-            DestroyObject(wallCollider);
+        if (includeFloor)
+            materials.Add(CreateMaterial(floorBrightness));
 
-        Renderer renderer = wall.GetComponent<Renderer>();
-        if (renderer != null)
-            renderer.sharedMaterial = material;
+        return materials.ToArray();
+    }
+
+    Mesh CreateBackgroundMesh(Vector3 size)
+    {
+        float halfX = size.x * 0.5f;
+        float halfY = size.y * 0.5f;
+        float halfZ = size.z * 0.5f;
+
+        List<Vector3> vertices = new List<Vector3>();
+        List<int[]> submeshTriangles = new List<int[]>();
+
+        AddQuad(
+            vertices,
+            submeshTriangles,
+            new Vector3(-halfX, -halfY, halfZ),
+            new Vector3(-halfX, halfY, halfZ),
+            new Vector3(halfX, halfY, halfZ),
+            new Vector3(halfX, -halfY, halfZ));
+        AddQuad(
+            vertices,
+            submeshTriangles,
+            new Vector3(-halfX, -halfY, -halfZ),
+            new Vector3(halfX, -halfY, -halfZ),
+            new Vector3(halfX, halfY, -halfZ),
+            new Vector3(-halfX, halfY, -halfZ));
+        AddQuad(
+            vertices,
+            submeshTriangles,
+            new Vector3(-halfX, -halfY, -halfZ),
+            new Vector3(-halfX, halfY, -halfZ),
+            new Vector3(-halfX, halfY, halfZ),
+            new Vector3(-halfX, -halfY, halfZ));
+        AddQuad(
+            vertices,
+            submeshTriangles,
+            new Vector3(halfX, -halfY, -halfZ),
+            new Vector3(halfX, -halfY, halfZ),
+            new Vector3(halfX, halfY, halfZ),
+            new Vector3(halfX, halfY, -halfZ));
+        AddQuad(
+            vertices,
+            submeshTriangles,
+            new Vector3(-halfX, halfY, -halfZ),
+            new Vector3(halfX, halfY, -halfZ),
+            new Vector3(halfX, halfY, halfZ),
+            new Vector3(-halfX, halfY, halfZ));
+
+        if (includeFloor)
+        {
+            AddQuad(
+                vertices,
+                submeshTriangles,
+                new Vector3(-halfX, -halfY, -halfZ),
+                new Vector3(-halfX, -halfY, halfZ),
+                new Vector3(halfX, -halfY, halfZ),
+                new Vector3(halfX, -halfY, -halfZ));
+        }
+
+        Mesh mesh = new Mesh
+        {
+            name = "Combined Background Box Mesh"
+        };
+        mesh.SetVertices(vertices);
+        mesh.subMeshCount = submeshTriangles.Count;
+
+        for (int i = 0; i < submeshTriangles.Count; i++)
+            mesh.SetTriangles(submeshTriangles[i], i);
+
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+        mesh.hideFlags = HideFlags.DontSave;
+        return mesh;
+    }
+
+    void AddQuad(
+        List<Vector3> vertices,
+        List<int[]> submeshTriangles,
+        Vector3 a,
+        Vector3 b,
+        Vector3 c,
+        Vector3 d)
+    {
+        int start = vertices.Count;
+        vertices.Add(a);
+        vertices.Add(b);
+        vertices.Add(c);
+        vertices.Add(d);
+
+        submeshTriangles.Add(new[]
+        {
+            start,
+            start + 1,
+            start + 2,
+            start,
+            start + 2,
+            start + 3
+        });
     }
 
     void DestroyObject(Object target)

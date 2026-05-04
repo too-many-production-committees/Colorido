@@ -75,7 +75,7 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    public void SyncWorldToProjectionBody()
+    public void SyncWorldToProjectionBody(bool snapToWalkable = true)
     {
         ResolveProjectionReferences();
 
@@ -85,6 +85,9 @@ public class PlayerController : MonoBehaviour
         projectionManager.UpdateProjectionAxes();
         projectionBody.position = projectionManager.WorldToProjection2D(GetFeetWorldPosition());
         projectionBody.velocity = Vector2.zero;
+        if (!snapToWalkable)
+            return;
+
         SnapProjectionBodyToNearestWalkableIfNeeded();
         velocity = Vector3.zero;
         jumpsRemaining = Mathf.Max(1, maxJumpCount);

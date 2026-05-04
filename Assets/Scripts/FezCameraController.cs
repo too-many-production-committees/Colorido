@@ -175,6 +175,9 @@ public class FezCameraController : MonoBehaviour
         if (projectionPhysicsBuilder != null)
             projectionPhysicsBuilder.Rebuild();
 
+        if (playerController != null)
+            playerController.SyncWorldToProjectionBody(false);
+
         if (playerActionRelocator != null)
             playerActionRelocator.OnCameraRotationComplete();
 

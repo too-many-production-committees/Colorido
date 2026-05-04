@@ -246,11 +246,15 @@ public class PlayerController : MonoBehaviour
         if (playerActionRelocator == null)
             return;
 
-        bool hasMoveInput = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.01f;
+        bool hasMoveInput = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.01f ||
+            Input.GetKey(KeyCode.A) ||
+            Input.GetKey(KeyCode.D) ||
+            Input.GetKey(KeyCode.LeftArrow) ||
+            Input.GetKey(KeyCode.RightArrow);
         if (!hasMoveInput && !jumpPressedThisFrame)
             return;
 
-        playerActionRelocator.OnPlayerActionInput();
+        playerActionRelocator.OnPlayerActionInput(hasMoveInput, jumpPressedThisFrame);
     }
 
     bool CanJump()

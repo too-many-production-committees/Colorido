@@ -38,6 +38,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     private bool pendingNearTransfer;
     private float currentOcclusionRatio;
     private ProjectionView recordedView;
+    private int bypassConstraintUntilFrame = -1;
 
     void Awake()
     {
@@ -71,10 +72,21 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
     public void OnPlayerActionInput()
     {
+        OnPlayerActionInput(false, false);
+    }
+
+    public void OnPlayerActionInput(bool moveInput, bool jumpInput)
+    {
         ResolveReferences();
 
         CurrentAreaState = EvaluatePlayerAreaState();
-        Log($"Player action input received. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}.");
+        bool shouldRequestBypass =
+            (CurrentAreaState & PlayerProjectionAreaState.SideArea) != 0 ||
+            (CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0;
+        if (shouldRequestBypass)
+            RequestConstraintBypassThisFrame();
+
+        Log($"Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}. Bypass requested: {shouldRequestBypass}.");
 
         if ((CurrentAreaState & PlayerProjectionAreaState.CommonArea) != 0 &&
             (CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
@@ -91,7 +103,10 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         }
 
         if ((CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0)
+        {
+            Log("Trying FarArea relocation after player action input.");
             TryRelocateFromFarArea();
+        }
     }
 
     public PlayerProjectionAreaState EvaluatePlayerAreaState()
@@ -114,7 +129,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         ProjectionView currentView = projectionManager.CurrentView;
         ProjectionViewMask currentViewMask = ProjectionViewUtility.ToMask(currentView);
-        Vector3 playerWorldPosition = player.position;
+        Vector3 playerWorldPosition = GetPlayerProjectionAnchorWorldPosition();
         Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerWorldPosition);
 
         ProjectionWalkable[] walkables = FindObjectsByType<ProjectionWalkable>(
@@ -219,6 +234,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return false;
         }
 
+        RequestConstraintBypassThisFrame();
         Vector3 playerAnchorWorldPosition = GetPlayerProjectionAnchorWorldPosition();
         Vector2 playerProjectionPosition = projectionManager.WorldToProjection2D(playerAnchorWorldPosition);
 
@@ -229,7 +245,15 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         }
 
         Log($"Relocating from SideArea to '{targetWalkable.name}' at depth {targetDepth:0.00}.");
-        return ApplyDepthOnlyRelocation(targetDepth);
+        bool relocated = ApplyDepthOnlyRelocation(targetDepth);
+        Log($"SideArea ApplyDepthOnlyRelocation success: {relocated}.");
+        if (relocated)
+        {
+            RequestConstraintBypassThisFrame();
+            CurrentAreaState = EvaluatePlayerAreaState();
+        }
+
+        return relocated;
     }
 
     public bool TryRelocateFromFarArea()
@@ -270,16 +294,21 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return false;
         }
 
-        if (!TryFindNearestLevelDepthForSameProjectionPoint(out float targetDepth, out ProjectionWalkable targetWalkable))
+        if (!TryFindNearestLevelCenterDepth(out float targetDepth, out ProjectionWalkable targetWalkable))
         {
             Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot relocate from FarArea. No current-view nearest level depth was found.", this);
             return false;
         }
 
-        Log($"Relocating from FarArea to nearest level '{targetWalkable.name}' at depth {targetDepth:0.00}. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}.");
+        Log($"FarArea target selected: '{targetWalkable.name}', targetDepth: {targetDepth:0.00}. Applying depth-only relocation. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}.");
         bool relocated = ApplyDepthOnlyRelocation(targetDepth);
+        Log($"FarArea ApplyDepthOnlyRelocation success: {relocated}.");
         if (relocated)
+        {
             pendingNearTransfer = false;
+            RequestConstraintBypassThisFrame();
+            CurrentAreaState = EvaluatePlayerAreaState();
+        }
 
         return relocated;
     }
@@ -333,7 +362,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             return;
         }
 
-        if (!TryFindNearestLevelDepthForSameProjectionPoint(out float targetDepth, out ProjectionWalkable targetWalkable))
+        if (!TryFindNearestLevelCenterDepth(out float targetDepth, out ProjectionWalkable targetWalkable))
         {
             Debug.LogWarning("[ProjectionPlayerActionRelocator] Cannot complete pending near transfer. No current-view nearest level depth was found.", this);
             return;
@@ -341,7 +370,11 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         Log($"Completing pending near transfer to '{targetWalkable.name}' at depth {targetDepth:0.00}. Occlusion {currentOcclusionRatio:0.00} < threshold {occlusionThreshold:0.00}.");
         if (ApplyDepthOnlyRelocation(targetDepth))
+        {
             pendingNearTransfer = false;
+            RequestConstraintBypassThisFrame();
+            CurrentAreaState = EvaluatePlayerAreaState();
+        }
     }
 
     private void ResolveReferences()
@@ -364,7 +397,13 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     {
         return pendingNearTransfer ||
             (CurrentAreaState & PlayerProjectionAreaState.SideArea) != 0 ||
-            (CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0;
+            (CurrentAreaState & PlayerProjectionAreaState.FarArea) != 0 ||
+            Time.frameCount <= bypassConstraintUntilFrame;
+    }
+
+    private void RequestConstraintBypassThisFrame()
+    {
+        bypassConstraintUntilFrame = Time.frameCount + 1;
     }
 
     private float EvaluateOcclusionRatio()
@@ -607,7 +646,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         return targetWalkable != null;
     }
 
-    private bool TryFindNearestLevelDepthForSameProjectionPoint(
+    private bool TryFindNearestLevelCenterDepth(
         out float targetDepth,
         out ProjectionWalkable targetWalkable)
     {
@@ -645,6 +684,20 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         }
 
         return targetWalkable != null;
+    }
+
+    private string GetActionInputSource(bool moveInput, bool jumpInput)
+    {
+        if (moveInput && jumpInput)
+            return "Move+Jump";
+
+        if (moveInput)
+            return "Move";
+
+        if (jumpInput)
+            return "Jump";
+
+        return "Unknown";
     }
 
     private bool IsCurrentViewLevelArea(

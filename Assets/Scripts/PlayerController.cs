@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour
     public FezCameraController cameraController;
     public ProjectionManager projectionManager;
     public ProjectionPhysicsBuilder projectionPhysicsBuilder;
+    public ProjectionPlayerActionRelocator playerActionRelocator;
 
     public bool useProjectionPhysics = true;
     public float moveSpeed = 5f;
@@ -41,6 +42,7 @@ public class PlayerController : MonoBehaviour
     private float jumpBufferCounter;
     private float coyoteCounter;
     private int jumpsRemaining;
+    private bool jumpPressedThisFrame;
 
     void Awake()
     {
@@ -142,6 +144,8 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        NotifyRelocatorOnActionInput();
+
         if (useProjectionPhysics)
         {
             MoveProjectionPhysics();
@@ -225,11 +229,25 @@ public class PlayerController : MonoBehaviour
 
     void UpdateJumpBuffer()
     {
-        bool jumpPressed = Input.GetKeyDown(jumpKey) || Input.GetButtonDown("Jump");
-        if (jumpPressed)
+        jumpPressedThisFrame = Input.GetKeyDown(jumpKey) || Input.GetButtonDown("Jump");
+        if (jumpPressedThisFrame)
             jumpBufferCounter = jumpBufferTime;
         else
             jumpBufferCounter -= Time.deltaTime;
+    }
+
+    void NotifyRelocatorOnActionInput()
+    {
+        ResolveProjectionReferences();
+
+        if (playerActionRelocator == null)
+            return;
+
+        bool hasMoveInput = Mathf.Abs(Input.GetAxisRaw("Horizontal")) > 0.01f;
+        if (!hasMoveInput && !jumpPressedThisFrame)
+            return;
+
+        playerActionRelocator.OnPlayerActionInput();
     }
 
     bool CanJump()
@@ -467,6 +485,12 @@ public class PlayerController : MonoBehaviour
 
         if (cameraController == null && projectionManager != null)
             cameraController = projectionManager.cameraController;
+
+        if (playerActionRelocator == null)
+            playerActionRelocator = GetComponent<ProjectionPlayerActionRelocator>();
+
+        if (playerActionRelocator == null)
+            playerActionRelocator = FindFirstObjectByType<ProjectionPlayerActionRelocator>();
 
         if (projectionManager != null && projectionManager.player == null)
             projectionManager.player = transform;

@@ -10,6 +10,7 @@ public class FezCameraController : MonoBehaviour
     public ProjectionManager projectionManager;
     public ProjectionPhysicsBuilder projectionPhysicsBuilder;
     public PlayerController playerController;
+    public ProjectionPlayerActionRelocator playerActionRelocator;
     public BackgroundBox backgroundBox;
     public bool rotateBackgroundWithCamera = false;
     public Camera controlledCamera;
@@ -174,11 +175,8 @@ public class FezCameraController : MonoBehaviour
         if (projectionPhysicsBuilder != null)
             projectionPhysicsBuilder.Rebuild();
 
-        if (projectionManager != null && projectionManager.enablePlatformTransfer)
-            projectionManager.TrySnapPlayer();
-
-        if (playerController != null)
-            playerController.SyncWorldToProjectionBody();
+        if (playerActionRelocator != null)
+            playerActionRelocator.OnCameraRotationComplete();
 
         rotating = false;
         OnCameraRotateFinished?.Invoke();
@@ -233,6 +231,15 @@ public class FezCameraController : MonoBehaviour
             if (playerController != null)
                 player = playerController.transform;
         }
+
+        if (playerActionRelocator == null && playerController != null)
+            playerActionRelocator = playerController.playerActionRelocator;
+
+        if (playerActionRelocator == null && player != null)
+            playerActionRelocator = player.GetComponent<ProjectionPlayerActionRelocator>();
+
+        if (playerActionRelocator == null)
+            playerActionRelocator = FindFirstObjectByType<ProjectionPlayerActionRelocator>();
     }
 
     IEnumerator SwitchViewMode(bool enterFirstPerson)

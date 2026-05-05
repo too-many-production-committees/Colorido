@@ -43,6 +43,7 @@ public class PlayerController : MonoBehaviour
     private float coyoteCounter;
     private int jumpsRemaining;
     private bool jumpPressedThisFrame;
+    private int skipWalkableConstraintUntilFrame = -1;
 
     void Awake()
     {
@@ -238,9 +239,14 @@ public class PlayerController : MonoBehaviour
     {
         jumpPressedThisFrame = Input.GetKeyDown(jumpKey) || Input.GetButtonDown("Jump");
         if (jumpPressedThisFrame)
+        {
             jumpBufferCounter = jumpBufferTime;
+            RequestSkipWalkableConstraintThisFrame();
+        }
         else
+        {
             jumpBufferCounter -= Time.deltaTime;
+        }
     }
 
     void NotifyRelocatorOnActionInput()
@@ -414,6 +420,12 @@ public class PlayerController : MonoBehaviour
         if (ShouldBypassProjectionWalkableConstraint())
             return;
 
+        if (ShouldSkipLocalWalkableConstraint())
+            return;
+
+        if (!IsProjectionGrounded())
+            return;
+
         if (!TryGetNearbyWalkableHorizontalRange(out float minX, out float maxX))
             return;
 
@@ -433,9 +445,6 @@ public class PlayerController : MonoBehaviour
             return;
 
         projectionBody.position = new Vector2(clampedX, projectionBody.position.y);
-        Vector2 bodyVelocity = projectionBody.velocity;
-        bodyVelocity.x = 0f;
-        projectionBody.velocity = bodyVelocity;
     }
 
     bool TryGetNearbyWalkableHorizontalRange(out float minX, out float maxX)
@@ -623,6 +632,12 @@ public class PlayerController : MonoBehaviour
         if (ShouldBypassProjectionWalkableConstraint())
             return;
 
+        if (ShouldSkipLocalWalkableConstraint())
+            return;
+
+        if (useProjectionPhysics && !IsProjectionGrounded())
+            return;
+
         Vector3 feetPosition = GetFeetWorldPosition();
 
         ProjectionWalkable[] walkables = FindObjectsByType<ProjectionWalkable>(
@@ -687,7 +702,6 @@ public class PlayerController : MonoBehaviour
             if (useProjectionPhysics && projectionBody != null && projectionManager != null)
             {
                 projectionBody.position = projectionManager.WorldToProjection2D(GetFeetWorldPosition());
-                projectionBody.velocity = new Vector2(0f, projectionBody.velocity.y);
             }
         }
     }
@@ -697,6 +711,16 @@ public class PlayerController : MonoBehaviour
         ResolveProjectionReferences();
         return playerActionRelocator != null &&
             playerActionRelocator.ShouldBypassProjectionWalkableConstraint();
+    }
+
+    private void RequestSkipWalkableConstraintThisFrame()
+    {
+        skipWalkableConstraintUntilFrame = Time.frameCount + 1;
+    }
+
+    private bool ShouldSkipLocalWalkableConstraint()
+    {
+        return Time.frameCount <= skipWalkableConstraintUntilFrame;
     }
 
     public void HandleProjectionTriggerEnter(Collider2D other)

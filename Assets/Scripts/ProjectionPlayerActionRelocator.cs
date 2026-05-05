@@ -41,6 +41,8 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
     private int bypassConstraintUntilFrame = -1;
     private bool actionRelocationAttemptedForCurrentArea;
     private PlayerProjectionAreaState actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
+    private PlayerProjectionAreaState areaStateAtRotationComplete = PlayerProjectionAreaState.None;
+    private bool relocationAllowedForRecordedPostRotationState;
 
     void Awake()
     {
@@ -67,11 +69,15 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             ? projectionManager.CurrentView
             : ProjectionView.Front;
         CurrentAreaState = EvaluatePlayerAreaState();
+        areaStateAtRotationComplete = CurrentAreaState;
+        relocationAllowedForRecordedPostRotationState =
+            (areaStateAtRotationComplete & PlayerProjectionAreaState.SideArea) != 0 ||
+            (areaStateAtRotationComplete & PlayerProjectionAreaState.FarArea) != 0;
         pendingNearTransfer = false;
         actionRelocationAttemptedForCurrentArea = false;
         actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
 
-        Log($"Camera rotation complete. Recorded view: {recordedView}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}.");
+        Log($"Camera rotation complete. Recorded view: {recordedView}. Area state: {CurrentAreaState}. Relocation allowed: {relocationAllowedForRecordedPostRotationState}. Occlusion: {currentOcclusionRatio:0.00}.");
     }
 
     public void OnPlayerActionInput()
@@ -97,16 +103,18 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         if ((CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
         {
+            relocationAllowedForRecordedPostRotationState = false;
             actionRelocationAttemptedForCurrentArea = false;
             actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
         }
 
-        Debug.LogWarning($"[ProjectionPlayerActionRelocator] Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Occlusion: {currentOcclusionRatio:0.00}. Needs relocation: {shouldRequestBypass}. Already attempted: {actionRelocationAttemptedForCurrentArea}.", this);
+        Debug.LogWarning($"[ProjectionPlayerActionRelocator] Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Recorded rotation state: {areaStateAtRotationComplete}. Occlusion: {currentOcclusionRatio:0.00}. Needs relocation: {shouldRequestBypass}. Relocation allowed: {relocationAllowedForRecordedPostRotationState}. Already attempted: {actionRelocationAttemptedForCurrentArea}.", this);
 
         if ((CurrentAreaState & PlayerProjectionAreaState.CommonArea) != 0 &&
             (CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
         {
             pendingNearTransfer = false;
+            relocationAllowedForRecordedPostRotationState = false;
             actionRelocationAttemptedForCurrentArea = false;
             actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             Log("Player is already in a near common area. Relocation skipped.");
@@ -115,6 +123,12 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
         if (shouldRequestBypass)
         {
+            if (!relocationAllowedForRecordedPostRotationState)
+            {
+                Debug.LogWarning($"[ProjectionPlayerActionRelocator] Action relocation skipped. Current {CurrentAreaState} was not recorded as a post-rotation SideArea/FarArea state, so this is treated as player-driven movement off the level.", this);
+                return;
+            }
+
             if (actionRelocationAttemptedForCurrentArea)
             {
                 Debug.LogWarning($"[ProjectionPlayerActionRelocator] Action relocation already attempted for current area state {CurrentAreaState}; skipping repeat bypass and relocation.", this);
@@ -123,6 +137,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
 
             actionRelocationAttemptedForCurrentArea = true;
             actionRelocationAttemptedAreaState = CurrentAreaState;
+            relocationAllowedForRecordedPostRotationState = false;
             RequestConstraintBypassThisFrame();
         }
 
@@ -277,6 +292,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         if (relocated)
         {
             RequestConstraintBypassThisFrame();
+            relocationAllowedForRecordedPostRotationState = false;
             actionRelocationAttemptedForCurrentArea = false;
             actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             CurrentAreaState = EvaluatePlayerAreaState();
@@ -298,6 +314,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         if ((CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)
         {
             pendingNearTransfer = false;
+            relocationAllowedForRecordedPostRotationState = false;
             actionRelocationAttemptedForCurrentArea = false;
             actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             Debug.LogWarning($"[ProjectionPlayerActionRelocator] FarArea relocation skipped because player is already on the nearest level. Current state: {CurrentAreaState}.", this);
@@ -338,6 +355,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         {
             pendingNearTransfer = false;
             RequestConstraintBypassThisFrame();
+            relocationAllowedForRecordedPostRotationState = false;
             actionRelocationAttemptedForCurrentArea = false;
             actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             CurrentAreaState = EvaluatePlayerAreaState();
@@ -407,6 +425,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
         {
             pendingNearTransfer = false;
             RequestConstraintBypassThisFrame();
+            relocationAllowedForRecordedPostRotationState = false;
             actionRelocationAttemptedForCurrentArea = false;
             actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
             CurrentAreaState = EvaluatePlayerAreaState();

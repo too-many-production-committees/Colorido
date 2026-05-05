@@ -18,7 +18,11 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
     public bool rebuildOnStart = true;
     public bool rebuildOnCameraRotateFinished = false;
     public bool includeInactiveMarkers = false;
-    public bool buildInteractablePhysicsProxies = true;
+    public bool buildWalkableProjectionProxies = false;
+    public bool buildInteractablePhysicsProxies = false;
+    public bool buildInteractableTriggerProxies = true;
+    public bool require3DContactForSolidProjection = true;
+    public float solidDepthTolerance = 0.15f;
     public float minimumColliderSize = 0.02f;
     public PhysicsMaterial2D zeroFrictionMaterial;
     public bool useTopSurfaceForWalkables = true;
@@ -69,9 +73,14 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
         projectionManager.UpdateProjectionAxes();
         EnsureRoot();
         ClearRoot();
-        BuildWalkables();
+
+        if (buildWalkableProjectionProxies)
+            BuildWalkables();
+
         BuildSolids();
-        BuildInteractables();
+
+        if (buildInteractableTriggerProxies || buildInteractablePhysicsProxies)
+            BuildInteractables();
     }
 
     void ResolveReferences()
@@ -147,6 +156,9 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
                 continue;
 
             Bounds bounds = walkable.GetProjectionBounds();
+            if (!ShouldBuildSolidProxy(walkable.gameObject, bounds))
+                continue;
+
             Rect rect = GetProjectedBoundsRect(bounds);
             rect.xMin -= walkable.padding.x;
             rect.xMax += walkable.padding.x;
@@ -191,13 +203,17 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
                 !IsAreaActiveForCurrentView(solid.gameObject))
                 continue;
 
+            Bounds bounds = solid.GetProjectionBounds();
+            if (!ShouldBuildSolidProxy(solid.gameObject, bounds))
+                continue;
+
             CreateProxy(
                 solid.gameObject,
                 null,
                 solid,
                 null,
                 ProjectionProxyKind.Solid,
-                solid.GetProjectionBounds(),
+                bounds,
                 solid.padding,
                 false);
         }
@@ -205,9 +221,6 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
 
     void BuildInteractables()
     {
-        if (!buildInteractablePhysicsProxies)
-            return;
-
         ProjectionInteractable[] interactables = FindObjectsByType<ProjectionInteractable>(
             includeInactiveMarkers ? FindObjectsInactive.Include : FindObjectsInactive.Exclude,
             FindObjectsSortMode.None);
@@ -220,16 +233,79 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
                 !IsAreaActiveForCurrentView(interactable.gameObject))
                 continue;
 
-            CreateProxy(
-                interactable.gameObject,
-                null,
-                null,
-                interactable,
-                ProjectionProxyKind.Interactable,
-                interactable.GetProjectionBounds(),
-                interactable.padding,
-                true);
+            Bounds bounds = interactable.GetProjectionBounds();
+
+            if (buildInteractableTriggerProxies)
+            {
+                CreateProxy(
+                    interactable.gameObject,
+                    null,
+                    null,
+                    interactable,
+                    ProjectionProxyKind.Interactable,
+                    bounds,
+                    interactable.padding,
+                    true);
+            }
+
+            if (buildInteractablePhysicsProxies && CanBuildInteractablePhysicsProxy(interactable.gameObject))
+            {
+                CreateProxy(
+                    interactable.gameObject,
+                    null,
+                    null,
+                    interactable,
+                    ProjectionProxyKind.Solid,
+                    bounds,
+                    interactable.padding,
+                    false);
+            }
         }
+    }
+
+    bool ShouldBuildSolidProxy(GameObject source, Bounds bounds)
+    {
+        if (TryGetProjectionObjectRole(source, out ProjectionObjectRole role))
+        {
+            if (role == ProjectionObjectRole.Ground)
+                return true;
+
+            if (role == ProjectionObjectRole.Interactable)
+                return false;
+        }
+
+        if (!require3DContactForSolidProjection)
+            return true;
+
+        if (projectionManager == null || projectionManager.player == null)
+            return false;
+
+        float playerDepth = projectionManager.WorldToProjectionDepth(projectionManager.player.position);
+        float objectDepth = projectionManager.WorldToProjectionDepth(bounds.center);
+        return Mathf.Abs(playerDepth - objectDepth) <= solidDepthTolerance;
+    }
+
+    bool CanBuildInteractablePhysicsProxy(GameObject source)
+    {
+        if (!TryGetProjectionObjectRole(source, out ProjectionObjectRole role))
+            return true;
+
+        return role != ProjectionObjectRole.Interactable;
+    }
+
+    bool TryGetProjectionObjectRole(GameObject source, out ProjectionObjectRole role)
+    {
+        role = ProjectionObjectRole.None;
+
+        if (source == null)
+            return false;
+
+        ProjectionObjectRoleMarker marker = source.GetComponent<ProjectionObjectRoleMarker>();
+        if (marker == null)
+            return false;
+
+        role = marker.role;
+        return true;
     }
 
     void CreateProxy(
@@ -276,7 +352,7 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
 
         bool useTopSurface = !isTrigger &&
             ((walkable != null && useTopSurfaceForWalkables) ||
-            (solid != null && solid.colliderMode == ProjectionSolidColliderMode.TopSurface));
+            (solid != null && GetEffectiveSolidColliderMode(solid) == ProjectionSolidColliderMode.TopSurface));
         if (useTopSurface)
             CreateTopSurfaceCollider(proxy, projectionRect);
         else
@@ -290,6 +366,28 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
             interactable,
             kind,
             projectionManager.WorldToProjectionDepth(bounds.center));
+    }
+
+    ProjectionSolidColliderMode GetEffectiveSolidColliderMode(ProjectionSolid solid)
+    {
+        if (solid == null)
+            return ProjectionSolidColliderMode.Auto;
+
+        if (!TryGetProjectionObjectRole(solid.gameObject, out ProjectionObjectRole role))
+            return solid.colliderMode;
+
+        switch (role)
+        {
+            case ProjectionObjectRole.Ground:
+            case ProjectionObjectRole.Platform:
+                return ProjectionSolidColliderMode.TopSurface;
+
+            case ProjectionObjectRole.Obstacle:
+                return ProjectionSolidColliderMode.Box;
+
+            default:
+                return solid.colliderMode;
+        }
     }
 
     void BuildWalkableEdgeConstraints(WalkableProjection[] walkables, int count)

@@ -6,10 +6,13 @@ using UnityEditor;
 
 public enum ProjectionObjectRole
 {
-    None,
-    Collision,
-    Interactable,
-    CollisionAndInteractable
+    None = 0,
+    Ground = 4,
+    Platform = 5,
+    Obstacle = 6,
+    Interactable = 2,
+    Collision = 1,
+    CollisionAndInteractable = 3
 }
 
 [DisallowMultipleComponent]
@@ -25,12 +28,24 @@ public class ProjectionObjectRoleMarker : MonoBehaviour
                 Debug.Log("[ProjectionObjectRoleMarker] Role is None. No projection state component was added.", this);
                 break;
 
-            case ProjectionObjectRole.Collision:
-                EnsureProjectionSolid();
+            case ProjectionObjectRole.Ground:
+                ConfigureProjectionSolid(ProjectionSolidColliderMode.TopSurface);
+                break;
+
+            case ProjectionObjectRole.Platform:
+                ConfigureProjectionSolid(ProjectionSolidColliderMode.TopSurface);
+                break;
+
+            case ProjectionObjectRole.Obstacle:
+                ConfigureProjectionSolid(ProjectionSolidColliderMode.Box);
                 break;
 
             case ProjectionObjectRole.Interactable:
                 EnsureProjectionInteractable();
+                break;
+
+            case ProjectionObjectRole.Collision:
+                EnsureProjectionSolid();
                 break;
 
             case ProjectionObjectRole.CollisionAndInteractable:
@@ -40,23 +55,31 @@ public class ProjectionObjectRoleMarker : MonoBehaviour
         }
     }
 
-    void EnsureProjectionSolid()
+    void ConfigureProjectionSolid(ProjectionSolidColliderMode colliderMode)
     {
-        if (TryGetComponent(out ProjectionSolid _))
+        ProjectionSolid solid = EnsureProjectionSolid();
+        if (solid != null)
+            solid.colliderMode = colliderMode;
+    }
+
+    ProjectionSolid EnsureProjectionSolid()
+    {
+        if (TryGetComponent(out ProjectionSolid solid))
         {
-            Debug.Log("[ProjectionObjectRoleMarker] 已有 ProjectionSolid 组件，已复用。", this);
-            return;
+            Debug.Log("[ProjectionObjectRoleMarker] Existing ProjectionSolid found and reused.", this);
+            return solid;
         }
 
-        AddProjectionComponent<ProjectionSolid>();
+        solid = AddProjectionComponent<ProjectionSolid>();
         Debug.Log("[ProjectionObjectRoleMarker] Added ProjectionSolid.", this);
+        return solid;
     }
 
     void EnsureProjectionInteractable()
     {
         if (TryGetComponent(out ProjectionInteractable _))
         {
-            Debug.Log("[ProjectionObjectRoleMarker] 已有 ProjectionInteractable 组件，已复用。", this);
+            Debug.Log("[ProjectionObjectRoleMarker] Existing ProjectionInteractable found and reused.", this);
             return;
         }
 

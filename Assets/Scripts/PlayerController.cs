@@ -440,7 +440,19 @@ public class PlayerController : MonoBehaviour
             paddedMax = center;
         }
 
-        float clampedX = Mathf.Clamp(projectionBody.position.x, paddedMin, paddedMax);
+        float inputX = GetHorizontalInput();
+        float currentX = projectionBody.position.x;
+        float edgeExitTolerance = 0.03f;
+        bool exitingLeft = inputX < -0.01f && currentX <= paddedMin + edgeExitTolerance;
+        bool exitingRight = inputX > 0.01f && currentX >= paddedMax - edgeExitTolerance;
+
+        if (exitingLeft || exitingRight)
+            return;
+
+        if (currentX < paddedMin || currentX > paddedMax)
+            return;
+
+        float clampedX = Mathf.Clamp(currentX, paddedMin, paddedMax);
         if (Mathf.Approximately(clampedX, projectionBody.position.x))
             return;
 
@@ -636,6 +648,9 @@ public class PlayerController : MonoBehaviour
             return;
 
         if (useProjectionPhysics && !IsProjectionGrounded())
+            return;
+
+        if (useProjectionPhysics)
             return;
 
         Vector3 feetPosition = GetFeetWorldPosition();

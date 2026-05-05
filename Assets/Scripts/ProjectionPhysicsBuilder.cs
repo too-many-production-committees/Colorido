@@ -20,7 +20,8 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
     public bool includeInactiveMarkers = false;
     public float minimumColliderSize = 0.02f;
     public PhysicsMaterial2D zeroFrictionMaterial;
-    public bool constrainWalkableEdges = true;
+    public bool useTopSurfaceForWalkables = true;
+    public bool constrainWalkableEdges = false;
     public float walkableEdgeThickness = 0.08f;
     public float walkableEdgeHeight = 2.5f;
     public float walkableEdgeMergeTolerance = 0.03f;
@@ -171,7 +172,7 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
                 false);
         }
 
-        if (constrainWalkableEdges)
+        if (constrainWalkableEdges && !useTopSurfaceForWalkables)
             BuildWalkableEdgeConstraints(activeWalkables, activeCount);
     }
 
@@ -269,8 +270,9 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
         proxy.transform.position = projectionRect.center;
         proxy.layer = GetProxyLayer(source);
 
-        bool useTopSurface = !isTrigger && solid != null &&
-            solid.colliderMode == ProjectionSolidColliderMode.TopSurface;
+        bool useTopSurface = !isTrigger &&
+            ((walkable != null && useTopSurfaceForWalkables) ||
+            (solid != null && solid.colliderMode == ProjectionSolidColliderMode.TopSurface));
         if (useTopSurface)
             CreateTopSurfaceCollider(proxy, projectionRect);
         else

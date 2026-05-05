@@ -18,6 +18,7 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
     public bool rebuildOnStart = true;
     public bool rebuildOnCameraRotateFinished = false;
     public bool includeInactiveMarkers = false;
+    public bool buildInteractablePhysicsProxies = true;
     public float minimumColliderSize = 0.02f;
     public PhysicsMaterial2D zeroFrictionMaterial;
     public bool useTopSurfaceForWalkables = true;
@@ -204,6 +205,9 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
 
     void BuildInteractables()
     {
+        if (!buildInteractablePhysicsProxies)
+            return;
+
         ProjectionInteractable[] interactables = FindObjectsByType<ProjectionInteractable>(
             includeInactiveMarkers ? FindObjectsInactive.Include : FindObjectsInactive.Exclude,
             FindObjectsSortMode.None);

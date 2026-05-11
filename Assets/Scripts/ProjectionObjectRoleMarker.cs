@@ -6,10 +6,13 @@ using UnityEditor;
 
 public enum ProjectionObjectRole
 {
-    None,
-    Collision,
-    Interactable,
-    CollisionAndInteractable
+    None = 0,
+    Collision = 1,
+    Interactable = 2,
+    CollisionAndInteractable = 3,
+    Ground = 4,
+    Platform = 5,
+    Obstacle = 6
 }
 
 [DisallowMultipleComponent]
@@ -26,6 +29,9 @@ public class ProjectionObjectRoleMarker : MonoBehaviour
                 break;
 
             case ProjectionObjectRole.Collision:
+            case ProjectionObjectRole.Ground:
+            case ProjectionObjectRole.Platform:
+            case ProjectionObjectRole.Obstacle:
                 EnsureProjectionSolid();
                 break;
 
@@ -44,7 +50,7 @@ public class ProjectionObjectRoleMarker : MonoBehaviour
     {
         if (TryGetComponent(out ProjectionSolid _))
         {
-            Debug.Log("[ProjectionObjectRoleMarker] 已有 ProjectionSolid 组件，已复用。", this);
+            Debug.Log("[ProjectionObjectRoleMarker] Reusing existing ProjectionSolid component.", this);
             return;
         }
 
@@ -56,7 +62,7 @@ public class ProjectionObjectRoleMarker : MonoBehaviour
     {
         if (TryGetComponent(out ProjectionInteractable _))
         {
-            Debug.Log("[ProjectionObjectRoleMarker] 已有 ProjectionInteractable 组件，已复用。", this);
+            Debug.Log("[ProjectionObjectRoleMarker] Reusing existing ProjectionInteractable component.", this);
             return;
         }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ProjectionPhysicsBuilder : MonoBehaviour
@@ -18,7 +19,14 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
     public bool rebuildOnStart = true;
     public bool rebuildOnCameraRotateFinished = false;
     public bool includeInactiveMarkers = false;
-    public bool buildInteractablePhysicsProxies = true;
+    public bool buildWalkableProjectionProxies = true;
+    public bool require3DContactForPlatformProjection = true;
+    public float platformHorizontalContactTolerance = 0.1f;
+    public float platformGroundContactHeightTolerance = 0.25f;
+    public bool buildInteractableTriggerProxies = true;
+    public bool buildInteractablePhysicsProxies = false;
+    public bool rebuildWhenPlayerMovesForContactFiltering = true;
+    public float playerContactRebuildDistance = 0.05f;
     public float minimumColliderSize = 0.02f;
     public PhysicsMaterial2D zeroFrictionMaterial;
     public bool useTopSurfaceForWalkables = true;
@@ -26,6 +34,13 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
     public float walkableEdgeThickness = 0.08f;
     public float walkableEdgeHeight = 2.5f;
     public float walkableEdgeMergeTolerance = 0.03f;
+
+    readonly HashSet<GameObject> builtCollisionSources = new HashSet<GameObject>();
+    Transform cachedPlayer;
+    CharacterController cachedPlayerController;
+    Vector3 lastPlayerFeetPosition;
+    bool hasLastPlayerFeetPosition;
+    bool isRebuilding;
 
     void Awake()
     {
@@ -56,28 +71,64 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
             Rebuild();
     }
 
+    void Update()
+    {
+        if (!Application.isPlaying ||
+            !rebuildWhenPlayerMovesForContactFiltering ||
+            !require3DContactForPlatformProjection ||
+            isRebuilding)
+            return;
+
+        Vector3 feet = GetPlayerFeetWorldPosition();
+        if (!hasLastPlayerFeetPosition)
+        {
+            lastPlayerFeetPosition = feet;
+            hasLastPlayerFeetPosition = true;
+            return;
+        }
+
+        float rebuildDistance = Mathf.Max(0.001f, playerContactRebuildDistance);
+        if ((feet - lastPlayerFeetPosition).sqrMagnitude < rebuildDistance * rebuildDistance)
+            return;
+
+        Rebuild();
+    }
+
     public void Rebuild()
     {
+        if (isRebuilding)
+            return;
+
+        isRebuilding = true;
         ResolveReferences();
 
         if (projectionManager == null)
         {
             Debug.LogWarning("ProjectionPhysicsBuilder needs a ProjectionManager.");
+            isRebuilding = false;
             return;
         }
 
         projectionManager.UpdateProjectionAxes();
         EnsureRoot();
         ClearRoot();
+        builtCollisionSources.Clear();
+        CachePlayerReferences();
+        lastPlayerFeetPosition = GetPlayerFeetWorldPosition();
+        hasLastPlayerFeetPosition = true;
+        BuildRoleMarkedCollisionObjects();
         BuildWalkables();
         BuildSolids();
         BuildInteractables();
+        isRebuilding = false;
     }
 
     void ResolveReferences()
     {
         if (projectionManager == null)
             projectionManager = FindFirstObjectByType<ProjectionManager>();
+
+        CachePlayerReferences();
     }
 
     ProjectionView GetCurrentView()
@@ -97,6 +148,54 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
         return area.IsActiveForView(ProjectionViewUtility.ToMask(GetCurrentView()));
     }
 
+    void BuildRoleMarkedCollisionObjects()
+    {
+        ProjectionObjectRoleMarker[] markers = FindObjectsByType<ProjectionObjectRoleMarker>(
+            includeInactiveMarkers ? FindObjectsInactive.Include : FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < markers.Length; i++)
+        {
+            ProjectionObjectRoleMarker marker = markers[i];
+            if (marker == null || !RoleHasCollision(marker.role))
+                continue;
+
+            GameObject source = marker.gameObject;
+            if (builtCollisionSources.Contains(source))
+                continue;
+
+            ProjectionSolid solid = source.GetComponent<ProjectionSolid>();
+            bool isGround = marker.role == ProjectionObjectRole.Ground;
+            if (!isGround)
+            {
+                if (solid != null && !solid.CanProjectInView(GetCurrentView()))
+                    continue;
+
+                if (!IsAreaActiveForCurrentView(source))
+                    continue;
+            }
+
+            Bounds bounds = solid != null
+                ? solid.GetProjectionBounds()
+                : GetProjectionBounds(source, true);
+
+            if (!ShouldBuildCollisionProxy(marker.role, solid, bounds))
+                continue;
+
+            CreateProxy(
+                source,
+                null,
+                solid,
+                null,
+                ProjectionProxyKind.Solid,
+                bounds,
+                solid != null ? solid.padding : Vector2.zero,
+                false,
+                isGround || marker.role == ProjectionObjectRole.Platform);
+            builtCollisionSources.Add(source);
+        }
+    }
+
     void EnsureRoot()
     {
         if (projectionPhysicsRoot != null)
@@ -111,6 +210,190 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
 
         GameObject root = new GameObject(rootName);
         projectionPhysicsRoot = root.transform;
+    }
+
+    void CachePlayerReferences()
+    {
+        if (projectionManager != null && projectionManager.player != null)
+            cachedPlayer = projectionManager.player;
+
+        if (cachedPlayer == null)
+        {
+            PlayerController player = FindFirstObjectByType<PlayerController>();
+            if (player != null)
+                cachedPlayer = player.transform;
+        }
+
+        if (cachedPlayer == null)
+        {
+            cachedPlayerController = null;
+            return;
+        }
+
+        if (cachedPlayerController == null ||
+            cachedPlayerController.transform != cachedPlayer)
+            cachedPlayerController = cachedPlayer.GetComponent<CharacterController>();
+    }
+
+    ProjectionObjectRole GetObjectRole(GameObject source)
+    {
+        if (source == null)
+            return ProjectionObjectRole.None;
+
+        ProjectionObjectRoleMarker marker = source.GetComponent<ProjectionObjectRoleMarker>();
+        return marker != null ? marker.role : ProjectionObjectRole.None;
+    }
+
+    bool RoleHasCollision(ProjectionObjectRole role)
+    {
+        return role == ProjectionObjectRole.Collision ||
+            role == ProjectionObjectRole.CollisionAndInteractable ||
+            role == ProjectionObjectRole.Ground ||
+            role == ProjectionObjectRole.Platform ||
+            role == ProjectionObjectRole.Obstacle;
+    }
+
+    bool ShouldSkipInteractableCollision(GameObject source, ProjectionObjectRole role)
+    {
+        if (buildInteractablePhysicsProxies)
+            return false;
+
+        if (role == ProjectionObjectRole.CollisionAndInteractable)
+            return false;
+
+        if (role != ProjectionObjectRole.None &&
+            role != ProjectionObjectRole.Interactable)
+            return false;
+
+        return source != null && source.GetComponent<ProjectionInteractable>() != null;
+    }
+
+    Bounds GetProjectionBounds(GameObject source, bool includeChildren)
+    {
+        if (ProjectionBoundsUtility.TryGetBounds(source, includeChildren, out Bounds bounds))
+            return bounds;
+
+        return new Bounds(source.transform.position, Vector3.one);
+    }
+
+    bool ShouldBuildCollisionProxy(
+        ProjectionObjectRole role,
+        ProjectionSolid solid,
+        Bounds bounds)
+    {
+        if (role == ProjectionObjectRole.Ground)
+            return true;
+
+        if (!require3DContactForPlatformProjection)
+            return true;
+
+        if (solid != null &&
+            solid.alwaysProjected &&
+            role != ProjectionObjectRole.Platform &&
+            role != ProjectionObjectRole.Obstacle)
+            return true;
+
+        if (role == ProjectionObjectRole.Platform ||
+            (role == ProjectionObjectRole.None &&
+            solid != null &&
+            solid.colliderMode == ProjectionSolidColliderMode.TopSurface))
+            return IsPlayerFeetNearPlatformTop(bounds);
+
+        return IsPlayerNearBounds3D(bounds);
+    }
+
+    bool ShouldBuildWalkableProxy(
+        ProjectionObjectRole role,
+        ProjectionWalkable walkable,
+        Bounds bounds)
+    {
+        if (role == ProjectionObjectRole.Ground)
+            return true;
+
+        if (!require3DContactForPlatformProjection)
+            return true;
+
+        if (walkable != null &&
+            walkable.alwaysProjected &&
+            role != ProjectionObjectRole.Platform &&
+            role != ProjectionObjectRole.Obstacle)
+            return true;
+
+        if (role == ProjectionObjectRole.Platform)
+            return IsPlayerFeetNearPlatformTop(bounds);
+
+        return IsPlayerNearBounds3D(bounds);
+    }
+
+    bool IsPlayerFeetNearPlatformTop(Bounds bounds)
+    {
+        Vector3 feet = GetPlayerFeetWorldPosition();
+        if (cachedPlayer == null)
+            return false;
+
+        float horizontalTolerance = Mathf.Max(0f, platformHorizontalContactTolerance);
+        float heightTolerance = Mathf.Max(0f, platformGroundContactHeightTolerance);
+
+        bool horizontalInside =
+            feet.x >= bounds.min.x - horizontalTolerance &&
+            feet.x <= bounds.max.x + horizontalTolerance &&
+            feet.z >= bounds.min.z - horizontalTolerance &&
+            feet.z <= bounds.max.z + horizontalTolerance;
+
+        bool nearTop =
+            Mathf.Abs(feet.y - bounds.max.y) <= heightTolerance ||
+            feet.y >= bounds.max.y - heightTolerance;
+
+        return horizontalInside && nearTop;
+    }
+
+    bool IsPlayerNearBounds3D(Bounds bounds)
+    {
+        Bounds playerBounds = GetPlayerWorldBounds();
+        if (cachedPlayer == null)
+            return false;
+
+        float horizontalTolerance = Mathf.Max(0f, platformHorizontalContactTolerance);
+        float heightTolerance = Mathf.Max(0f, platformGroundContactHeightTolerance);
+        bounds.Expand(new Vector3(
+            horizontalTolerance * 2f,
+            heightTolerance * 2f,
+            horizontalTolerance * 2f));
+
+        return bounds.Intersects(playerBounds);
+    }
+
+    Vector3 GetPlayerFeetWorldPosition()
+    {
+        CachePlayerReferences();
+
+        if (cachedPlayerController != null)
+        {
+            Bounds bounds = cachedPlayerController.bounds;
+            return new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+        }
+
+        if (cachedPlayer == null)
+            return Vector3.zero;
+
+        return cachedPlayer.position;
+    }
+
+    Bounds GetPlayerWorldBounds()
+    {
+        CachePlayerReferences();
+
+        if (cachedPlayerController != null)
+            return cachedPlayerController.bounds;
+
+        if (cachedPlayer == null)
+            return new Bounds(Vector3.zero, Vector3.zero);
+
+        Collider playerCollider = cachedPlayer.GetComponent<Collider>();
+        if (playerCollider != null)
+            return playerCollider.bounds;
+
+        return new Bounds(cachedPlayer.position, Vector3.one * 0.5f);
     }
 
     void ClearRoot()
@@ -141,12 +424,20 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
         for (int i = 0; i < walkables.Length; i++)
         {
             ProjectionWalkable walkable = walkables[i];
+            ProjectionObjectRole role = GetObjectRole(walkable != null ? walkable.gameObject : null);
+            bool isGround = role == ProjectionObjectRole.Ground;
             if (walkable == null ||
-                !walkable.CanProjectInView(GetCurrentView()) ||
-                !IsAreaActiveForCurrentView(walkable.gameObject))
+                ShouldSkipInteractableCollision(walkable.gameObject, role) ||
+                builtCollisionSources.Contains(walkable.gameObject) ||
+                (!isGround && !buildWalkableProjectionProxies) ||
+                (!isGround && !walkable.CanProjectInView(GetCurrentView())) ||
+                (!isGround && !IsAreaActiveForCurrentView(walkable.gameObject)))
                 continue;
 
             Bounds bounds = walkable.GetProjectionBounds();
+            if (!ShouldBuildWalkableProxy(role, walkable, bounds))
+                continue;
+
             Rect rect = GetProjectedBoundsRect(bounds);
             rect.xMin -= walkable.padding.x;
             rect.xMax += walkable.padding.x;
@@ -170,7 +461,9 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
                 ProjectionProxyKind.Solid,
                 bounds,
                 rect,
-                false);
+                false,
+                isGround);
+            builtCollisionSources.Add(walkable.gameObject);
         }
 
         if (constrainWalkableEdges && !useTopSurfaceForWalkables)
@@ -186,9 +479,17 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
         for (int i = 0; i < solids.Length; i++)
         {
             ProjectionSolid solid = solids[i];
+            ProjectionObjectRole role = GetObjectRole(solid != null ? solid.gameObject : null);
+            bool isGround = role == ProjectionObjectRole.Ground;
             if (solid == null ||
-                !solid.CanProjectInView(GetCurrentView()) ||
-                !IsAreaActiveForCurrentView(solid.gameObject))
+                ShouldSkipInteractableCollision(solid.gameObject, role) ||
+                builtCollisionSources.Contains(solid.gameObject) ||
+                (!isGround && !solid.CanProjectInView(GetCurrentView())) ||
+                (!isGround && !IsAreaActiveForCurrentView(solid.gameObject)))
+                continue;
+
+            Bounds bounds = solid.GetProjectionBounds();
+            if (!ShouldBuildCollisionProxy(role, solid, bounds))
                 continue;
 
             CreateProxy(
@@ -197,15 +498,17 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
                 solid,
                 null,
                 ProjectionProxyKind.Solid,
-                solid.GetProjectionBounds(),
+                bounds,
                 solid.padding,
-                false);
+                false,
+                isGround);
+            builtCollisionSources.Add(solid.gameObject);
         }
     }
 
     void BuildInteractables()
     {
-        if (!buildInteractablePhysicsProxies)
+        if (!buildInteractableTriggerProxies)
             return;
 
         ProjectionInteractable[] interactables = FindObjectsByType<ProjectionInteractable>(
@@ -240,7 +543,8 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
         ProjectionProxyKind kind,
         Bounds bounds,
         Vector2 padding,
-        bool isTrigger)
+        bool isTrigger,
+        bool forceTopSurface = false)
     {
         Rect projectionRect = GetProjectedBoundsRect(bounds);
         projectionRect.xMin -= padding.x;
@@ -256,7 +560,8 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
             kind,
             bounds,
             projectionRect,
-            isTrigger);
+            isTrigger,
+            forceTopSurface);
     }
 
     void CreateProxyFromRect(
@@ -267,16 +572,20 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
         ProjectionProxyKind kind,
         Bounds bounds,
         Rect projectionRect,
-        bool isTrigger)
+        bool isTrigger,
+        bool forceTopSurface = false)
     {
         GameObject proxy = new GameObject($"{source.name}_{kind}_ProjectionProxy");
         proxy.transform.SetParent(projectionPhysicsRoot, false);
         proxy.transform.position = projectionRect.center;
         proxy.layer = GetProxyLayer(source);
 
+        ProjectionObjectRole role = GetObjectRole(source);
         bool useTopSurface = !isTrigger &&
+            role != ProjectionObjectRole.Obstacle &&
+            (forceTopSurface ||
             ((walkable != null && useTopSurfaceForWalkables) ||
-            (solid != null && solid.colliderMode == ProjectionSolidColliderMode.TopSurface));
+            (solid != null && solid.colliderMode == ProjectionSolidColliderMode.TopSurface)));
         if (useTopSurface)
             CreateTopSurfaceCollider(proxy, projectionRect);
         else
@@ -366,6 +675,7 @@ public class ProjectionPhysicsBuilder : MonoBehaviour
             new Vector2(projectionRect.xMin - projectionRect.center.x, projectionRect.yMax - projectionRect.center.y),
             new Vector2(projectionRect.xMax - projectionRect.center.x, projectionRect.yMax - projectionRect.center.y)
         };
+        edge.isTrigger = false;
         edge.sharedMaterial = GetZeroFrictionMaterial();
     }
 

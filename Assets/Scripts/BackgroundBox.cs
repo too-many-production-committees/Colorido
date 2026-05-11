@@ -1,6 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 [ExecuteAlways]
 public class BackgroundBox : MonoBehaviour
 {
@@ -24,15 +28,16 @@ public class BackgroundBox : MonoBehaviour
     private float currentYaw;
     private float yawVelocity;
     private bool rebuildQueued;
+    private bool isBuilding;
 
     void OnEnable()
     {
-        Build();
+        QueueRebuild();
     }
 
     void Start()
     {
-        Build();
+        QueueRebuild();
     }
 
     void OnValidate()
@@ -57,25 +62,58 @@ public class BackgroundBox : MonoBehaviour
 
     void Build()
     {
+        if (isBuilding)
+            return;
+
         if (!enabled)
             return;
 
-        Transform existing = transform.Find(ContainerName);
-        if (existing != null)
-            DestroyObject(existing.gameObject);
+        isBuilding = true;
+        try
+        {
+            Transform existing = transform.Find(ContainerName);
+            if (existing != null)
+            {
+                if (container == existing)
+                    container = null;
 
-        GameObject containerObject = new GameObject(ContainerName);
-        container = containerObject.transform;
-        container.SetParent(transform, true);
-        container.position = center;
-        container.rotation = Quaternion.identity;
-        containerObject.hideFlags = HideFlags.DontSave;
+                GameObject existingObject = existing.gameObject;
+                existing.SetParent(null);
+                DestroyGeneratedObject(existingObject);
+            }
 
-        Vector3 size = Vector3.one * cubeSize;
-        MeshFilter meshFilter = containerObject.AddComponent<MeshFilter>();
-        MeshRenderer meshRenderer = containerObject.AddComponent<MeshRenderer>();
-        meshFilter.sharedMesh = CreateBackgroundMesh(size);
-        meshRenderer.sharedMaterials = CreateMaterials();
+            GameObject containerObject = new GameObject(ContainerName);
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                Undo.RegisterCreatedObjectUndo(containerObject, "Create Background Box");
+#endif
+
+            container = containerObject.transform;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+                Undo.SetTransformParent(container, transform, "Parent Background Box");
+            else
+                container.SetParent(transform, true);
+#else
+            container.SetParent(transform, true);
+#endif
+
+            container.position = center;
+            container.rotation = Quaternion.identity;
+            containerObject.hideFlags = HideFlags.DontSave;
+
+            Vector3 size = Vector3.one * cubeSize;
+            MeshFilter meshFilter = containerObject.AddComponent<MeshFilter>();
+            MeshRenderer meshRenderer = containerObject.AddComponent<MeshRenderer>();
+            meshFilter.sharedMesh = CreateBackgroundMesh(size);
+            meshRenderer.sharedMaterials = CreateMaterials();
+        }
+        finally
+        {
+            isBuilding = false;
+        }
     }
 
     Material CreateMaterial(float brightness)
@@ -204,12 +242,20 @@ public class BackgroundBox : MonoBehaviour
         });
     }
 
-    void DestroyObject(Object target)
+    void DestroyGeneratedObject(Object target)
     {
-        if (Application.isPlaying)
-            Destroy(target);
-        else
-            DestroyImmediate(target);
+        if (target == null)
+            return;
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            Undo.DestroyObjectImmediate(target);
+            return;
+        }
+#endif
+
+        Destroy(target);
     }
 
     public void SetCameraYaw(float cameraYaw, float rotationPulse)

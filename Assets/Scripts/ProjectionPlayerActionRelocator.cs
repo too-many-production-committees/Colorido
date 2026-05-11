@@ -108,7 +108,7 @@ public class ProjectionPlayerActionRelocator : MonoBehaviour
             actionRelocationAttemptedAreaState = PlayerProjectionAreaState.None;
         }
 
-        Debug.LogWarning($"[ProjectionPlayerActionRelocator] Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Recorded rotation state: {areaStateAtRotationComplete}. Occlusion: {currentOcclusionRatio:0.00}. Needs relocation: {shouldRequestBypass}. Relocation allowed: {relocationAllowedForRecordedPostRotationState}. Already attempted: {actionRelocationAttemptedForCurrentArea}.", this);
+        Log($"Player action input received. Source: {GetActionInputSource(moveInput, jumpInput)}. Area state: {CurrentAreaState}. Recorded rotation state: {areaStateAtRotationComplete}. Occlusion: {currentOcclusionRatio:0.00}. Needs relocation: {shouldRequestBypass}. Relocation allowed: {relocationAllowedForRecordedPostRotationState}. Already attempted: {actionRelocationAttemptedForCurrentArea}.");
 
         if ((CurrentAreaState & PlayerProjectionAreaState.CommonArea) != 0 &&
             (CurrentAreaState & PlayerProjectionAreaState.NearArea) != 0)

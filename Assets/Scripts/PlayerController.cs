@@ -84,15 +84,15 @@ public class PlayerController : MonoBehaviour
             return;
 
         projectionManager.UpdateProjectionAxes();
-        Vector2 preservedVelocity = projectionBody.velocity;
+        Vector2 preservedVelocity = projectionBody.linearVelocity;
         projectionBody.position = projectionManager.WorldToProjection2D(GetFeetWorldPosition());
         if (!snapToWalkable)
         {
-            projectionBody.velocity = preservedVelocity;
+            projectionBody.linearVelocity = preservedVelocity;
             return;
         }
 
-        projectionBody.velocity = Vector2.zero;
+        projectionBody.linearVelocity = Vector2.zero;
         SnapProjectionBodyToNearestWalkableIfNeeded();
         velocity = Vector3.zero;
         jumpsRemaining = Mathf.Max(1, maxJumpCount);
@@ -128,7 +128,7 @@ public class PlayerController : MonoBehaviour
             projectionBody.position = projectionManager != null
                 ? projectionManager.WorldToProjection2D(GetFeetWorldPosition())
                 : new Vector2(worldPosition.x, worldPosition.y);
-            projectionBody.velocity = Vector2.zero;
+            projectionBody.linearVelocity = Vector2.zero;
             SnapProjectionBodyToNearestWalkableIfNeeded();
         }
 
@@ -148,7 +148,7 @@ public class PlayerController : MonoBehaviour
         if (inputPaused)
         {
             if (projectionBody != null)
-                projectionBody.velocity = Vector2.zero;
+                projectionBody.linearVelocity = Vector2.zero;
             return;
         }
 
@@ -170,7 +170,7 @@ public class PlayerController : MonoBehaviour
             return;
 
         float inputX = GetHorizontalInput();
-        Vector2 bodyVelocity = projectionBody.velocity;
+        Vector2 bodyVelocity = projectionBody.linearVelocity;
         bodyVelocity.x = inputX * moveSpeed;
 
         bool grounded = IsProjectionGrounded();
@@ -193,7 +193,7 @@ public class PlayerController : MonoBehaviour
         }
 
         bodyVelocity.y += gravity * Time.deltaTime;
-        projectionBody.velocity = bodyVelocity;
+        projectionBody.linearVelocity = bodyVelocity;
         ConstrainProjectionBodyToWalkableArea();
         velocity.y = bodyVelocity.y;
 
@@ -374,7 +374,7 @@ public class PlayerController : MonoBehaviour
             targetX = bounds.center.x;
 
         projectionBody.position = new Vector2(targetX, bounds.max.y);
-        projectionBody.velocity = Vector2.zero;
+        projectionBody.linearVelocity = Vector2.zero;
     }
 
     Collider2D FindNearestWalkableCollider()

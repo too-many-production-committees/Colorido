@@ -9,8 +9,10 @@ public class NPCBillboardVisual : MonoBehaviour
 {
     public Texture2D texture;
     public Camera targetCamera;
+    public Transform targetCameraTransform;
     public Vector2 size = new Vector2(1.1f, 1.8f);
     public Vector3 localOffset = new Vector3(0f, 0.9f, 0f);
+    public Vector3 rotationCorrectionEuler = new Vector3(0f, 180f, 0f);
     public Color tint = Color.white;
     public bool hideOriginalMesh = true;
     public bool autoApplyPositionAndScale = true;
@@ -21,6 +23,7 @@ public class NPCBillboardVisual : MonoBehaviour
 
     private Transform visual;
     private MeshRenderer visualRenderer;
+    private NPCBillboard billboard;
     private Material material;
 
     void OnEnable()
@@ -38,6 +41,7 @@ public class NPCBillboardVisual : MonoBehaviour
             return;
 
         ApplyMaterialOnly();
+        UpdateBillboardState();
 
         if (!manualTransformMode)
             ApplySettings();
@@ -104,6 +108,12 @@ public class NPCBillboardVisual : MonoBehaviour
             material.name = "NPCBillboardMaterial";
             visualRenderer.sharedMaterial = material;
         }
+
+        billboard = visual.GetComponent<NPCBillboard>();
+        if (billboard == null)
+            billboard = visual.gameObject.AddComponent<NPCBillboard>();
+
+        UpdateBillboardState();
     }
 
     void ApplySettings()
@@ -118,6 +128,8 @@ public class NPCBillboardVisual : MonoBehaviour
         }
 
         ApplyMaterialOnly();
+
+        UpdateBillboardState();
 
         if (hideOriginalMesh)
         {
@@ -138,19 +150,33 @@ public class NPCBillboardVisual : MonoBehaviour
 
     void FaceCamera()
     {
+        if (billboard == null || visual == null)
+            return;
+
+        Transform cameraTransform = ResolveCameraTransform();
+
+        billboard.targetCameraTransform = cameraTransform;
+        billboard.rotationCorrectionEuler = rotationCorrectionEuler;
+
+        if (cameraTransform != null)
+            visual.rotation = cameraTransform.rotation * Quaternion.Euler(rotationCorrectionEuler);
+    }
+
+    Transform ResolveCameraTransform()
+    {
+        if (targetCameraTransform != null)
+            return targetCameraTransform;
+
         if (targetCamera == null)
             targetCamera = Camera.main;
 
-        if (targetCamera == null || visual == null)
-            return;
+        return targetCamera != null ? targetCamera.transform : null;
+    }
 
-        Vector3 forward = targetCamera.transform.position - visual.position;
-        forward.y = 0f;
-
-        if (forward.sqrMagnitude < 0.0001f)
-            forward = -targetCamera.transform.forward;
-
-        visual.rotation = Quaternion.LookRotation(forward.normalized, Vector3.up);
+    void UpdateBillboardState()
+    {
+        if (billboard != null)
+            billboard.enabled = autoFaceCamera && !manualTransformMode;
     }
 
     void DestroyGeneratedObject(Object target)

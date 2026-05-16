@@ -29,10 +29,16 @@ public class ProjectionObjectRoleMarker : MonoBehaviour
                 break;
 
             case ProjectionObjectRole.Collision:
+                EnsureProjectionSolid();
+                break;
+
             case ProjectionObjectRole.Ground:
             case ProjectionObjectRole.Platform:
+                ConfigureProjectionSolid(ProjectionSolidColliderMode.TopSurface);
+                break;
+
             case ProjectionObjectRole.Obstacle:
-                EnsureProjectionSolid();
+                ConfigureProjectionSolid(ProjectionSolidColliderMode.Box);
                 break;
 
             case ProjectionObjectRole.Interactable:
@@ -46,16 +52,24 @@ public class ProjectionObjectRoleMarker : MonoBehaviour
         }
     }
 
-    void EnsureProjectionSolid()
+    void ConfigureProjectionSolid(ProjectionSolidColliderMode colliderMode)
     {
-        if (TryGetComponent(out ProjectionSolid _))
+        ProjectionSolid solid = EnsureProjectionSolid();
+        if (solid != null)
+            solid.colliderMode = colliderMode;
+    }
+
+    ProjectionSolid EnsureProjectionSolid()
+    {
+        if (TryGetComponent(out ProjectionSolid solid))
         {
             Debug.Log("[ProjectionObjectRoleMarker] Reusing existing ProjectionSolid component.", this);
-            return;
+            return solid;
         }
 
-        AddProjectionComponent<ProjectionSolid>();
+        solid = AddProjectionComponent<ProjectionSolid>();
         Debug.Log("[ProjectionObjectRoleMarker] Added ProjectionSolid.", this);
+        return solid;
     }
 
     void EnsureProjectionInteractable()

@@ -3943,7 +3943,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e3b814910854b7f8607848f8664d3ee, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  enabledEffect: 1
+  enabledEffect: 0
   verticalResolution: 144
   filterMode: 0
   postShader: {fileID: 4800000, guid: 0e21c922d2d84732bd56d8ab00640354, type: 3}

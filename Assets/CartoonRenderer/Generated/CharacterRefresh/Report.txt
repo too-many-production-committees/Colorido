@@ -1,0 +1,10 @@
+24 fps / 40 sprite frames / 8 seconds per cold-cache phase
+START interval=0.221
+interval=0.221s samples=156 matchingProjected=53 coverage=34.0 % distinctProjected=26/40 completed=32 cache=32 cpuLast=10.0ms
+START interval=0
+interval=0.000s samples=179 matchingProjected=140 coverage=78.2 % distinctProjected=40/40 completed=40 cache=40 cpuLast=11.4ms
+START warm replay (same cache, no reset)
+WARM replay: samples=84 matchingProjected=84 coverage=100.0 % newBuilds=0
+PASS: no stale animation frames or overlapping original; identical style and scene settings.
+NOTE: coverage counts CPU render checks, not display presentation; this is not a sealed benchmark.
+RESULT: PASS

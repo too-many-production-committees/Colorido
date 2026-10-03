@@ -1,0 +1,11 @@
+Unity 6000.3.25f1; Metal; Linear
+PASS: both additive scenes and DontSave child collected, with an empty last scene
+PASS: unloaded scene removed from collection
+PASS: color format=R8G8B8A8_UNorm, sRGB=False
+PASS: ids format=R8G8B8A8_UNorm, sRGB=False
+PASS: Synchronous albedo capture RGB=(128, 64, 32), expected (128, 64, 32), tolerance 2
+PASS: identity bytes (1, 0, 0, 255), no sRGB conversion
+PASS: Synchronous polygon redraw RGB=(128, 64, 32), expected (128, 64, 32), tolerance 2
+PASS: Normal asynchronous polygon redraw RGB=(128, 64, 32), expected (128, 64, 32), tolerance 2
+PASS: async callbacks and worker completed after 3 editor updates; 2 regions; 768 → 8 contour edges; 10 triangles; CPU 4.5 ms
+PASS: four migration comparison fixtures regenerated

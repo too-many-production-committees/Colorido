@@ -1,0 +1,23 @@
+Real Play mode / shadow / character regression
+ENTER cycle=0
+PLAY cycle=0 shadows=1
+PASS: both channels on; projection visible; original hidden.
+PASS: Master off restores original sprite.
+PASS: Scene only, character original.
+PASS: Character only, scene off, original hidden.
+PASS: shape/contour change under shadows; frames=165 projectedFrames=7 characters=1/1 prepares=5/5 failed=0 cache=1 entries/24576 px hitRate=3.2 % evictions=0 buildMs=30.5
+ENTER cycle=1
+PLAY cycle=1 shadows=1
+PASS: both channels on; projection visible; original hidden.
+PASS: Master off restores original sprite.
+PASS: Scene only, character original.
+PASS: Character only, scene off, original hidden.
+PASS: shape/contour change under shadows; frames=128 projectedFrames=25 characters=1/1 prepares=3/3 failed=0 cache=3 entries/73728 px hitRate=4.5 % evictions=0 buildMs=35.9
+ENTER cycle=2
+PLAY cycle=2 shadows=1
+PASS: both channels on; projection visible; original hidden.
+PASS: Master off restores original sprite.
+PASS: Scene only, character original.
+PASS: Character only, scene off, original hidden.
+PASS: shape/contour change under shadows; frames=115 projectedFrames=23 characters=1/1 prepares=3/3 failed=0 cache=3 entries/73728 px hitRate=5.4 % evictions=0 buildMs=29.0
+RESULT: PASS (3 real Play/Stop cycles; async sampling; shadows; Master and channel switches)

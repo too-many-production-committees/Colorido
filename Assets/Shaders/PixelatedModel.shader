@@ -1,3 +1,6 @@
+// URP port of the original Built-in surface shader.
+// Property names, default values and the quantized look are kept identical so existing
+// .mat assets keep working; only the lighting integration moved to HLSL.
 Shader "Custom/Pixelated Model"
 {
     Properties
@@ -17,77 +20,225 @@ Shader "Custom/Pixelated Model"
 
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags
+        {
+            "RenderPipeline" = "UniversalPipeline"
+            "RenderType" = "Opaque"
+            "Queue" = "Geometry"
+        }
+
         LOD 200
 
-        CGPROGRAM
-        #pragma surface surf PixelLit vertex:vert fullforwardshadows
-        #pragma target 3.0
-
-        sampler2D _MainTex;
-        fixed4 _Color;
-        float _TexturePixels;
-        float _ColorSteps;
-        float _ShadowThreshold;
-        float _ShadowStrength;
-        float _HighlightThreshold;
-        float _HighlightStrength;
-        fixed4 _HighlightColor;
-        float _AmbientStrength;
-        float _VertexSnap;
-
-        struct Input
+        Pass
         {
-            float2 uv_MainTex;
-        };
+            Name "ForwardLit"
+            Tags { "LightMode" = "UniversalForward" }
 
-        void vert(inout appdata_full v)
-        {
-            if (_VertexSnap <= 0.0001)
-                return;
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT
 
-            float3 worldPosition = mul(unity_ObjectToWorld, v.vertex).xyz;
-            worldPosition = floor(worldPosition / _VertexSnap + 0.5) * _VertexSnap;
-            v.vertex = mul(unity_WorldToObject, float4(worldPosition, 1.0));
-        }
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-        float3 QuantizeColor(float3 color, float steps)
-        {
-            steps = max(2.0, steps);
-            return floor(saturate(color) * (steps - 1.0) + 0.5) / (steps - 1.0);
-        }
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
 
-        void surf(Input IN, inout SurfaceOutput o)
-        {
-            float2 uv = IN.uv_MainTex;
+            CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                half4 _Color;
+                half4 _HighlightColor;
+                float _TexturePixels;
+                float _ColorSteps;
+                float _ShadowThreshold;
+                float _ShadowStrength;
+                float _HighlightThreshold;
+                float _HighlightStrength;
+                float _AmbientStrength;
+                float _VertexSnap;
+            CBUFFER_END
 
-            if (_TexturePixels > 1.0)
+            struct Attributes
             {
-                uv = (floor(uv * _TexturePixels) + 0.5) / _TexturePixels;
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+                float3 positionWS : TEXCOORD1;
+                half3 normalWS : TEXCOORD2;
+                float4 shadowCoord : TEXCOORD3;
+            };
+
+            float3 QuantizeColor(float3 color, float steps)
+            {
+                steps = max(2.0, steps);
+                return floor(saturate(color) * (steps - 1.0) + 0.5) / (steps - 1.0);
             }
 
-            fixed4 sampled = tex2D(_MainTex, uv) * _Color;
-            o.Albedo = QuantizeColor(sampled.rgb, _ColorSteps);
-            o.Alpha = sampled.a;
+            // Original vertex stage snapped world position to a grid before transforming.
+            float3 SnapWorldPosition(float3 positionWS)
+            {
+                if (_VertexSnap <= 0.0001)
+                    return positionWS;
+                return floor(positionWS / _VertexSnap + 0.5) * _VertexSnap;
+            }
+
+            Varyings vert(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                positionWS = SnapWorldPosition(positionWS);
+
+                output.positionWS = positionWS;
+                output.positionCS = TransformWorldToHClip(positionWS);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                output.shadowCoord = TransformWorldToShadowCoord(positionWS);
+                return output;
+            }
+
+            half4 frag(Varyings input) : SV_Target
+            {
+                float2 uv = input.uv;
+                if (_TexturePixels > 1.0)
+                    uv = (floor(uv * _TexturePixels) + 0.5) / _TexturePixels;
+
+                half4 sampled = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv) * _Color;
+                half3 albedo = QuantizeColor(sampled.rgb, _ColorSteps);
+
+                Light mainLight = GetMainLight(input.shadowCoord);
+                half3 normalWS = normalize(input.normalWS);
+                half ndotl = saturate(dot(normalWS, mainLight.direction));
+
+                half lit = step(_ShadowThreshold, ndotl);
+                half lightAmount = lerp(_ShadowStrength, 1.0h, lit) * mainLight.shadowAttenuation;
+                lightAmount = max(lightAmount, _AmbientStrength);
+
+                half highlight = step(_HighlightThreshold, ndotl) * _HighlightStrength;
+
+                half3 color = albedo * mainLight.color * lightAmount;
+                color += _HighlightColor.rgb * highlight;
+                return half4(color, sampled.a);
+            }
+            ENDHLSL
         }
 
-        half4 LightingPixelLit(SurfaceOutput s, half3 lightDir, half atten)
+        Pass
         {
-            half ndotl = saturate(dot(s.Normal, lightDir));
-            half lit = step(_ShadowThreshold, ndotl);
-            half lightAmount = lerp(_ShadowStrength, 1.0h, lit) * atten;
-            lightAmount = max(lightAmount, _AmbientStrength);
+            Name "ShadowCaster"
+            Tags { "LightMode" = "ShadowCaster" }
 
-            half highlight = step(_HighlightThreshold, ndotl) * _HighlightStrength;
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull Back
 
-            half4 color;
-            color.rgb = s.Albedo * _LightColor0.rgb * lightAmount;
-            color.rgb += _HighlightColor.rgb * highlight;
-            color.a = s.Alpha;
-            return color;
+            HLSLPROGRAM
+            #pragma vertex ShadowVert
+            #pragma fragment ShadowFrag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                half4 _Color;
+                half4 _HighlightColor;
+                float _TexturePixels;
+                float _ColorSteps;
+                float _ShadowThreshold;
+                float _ShadowStrength;
+                float _HighlightThreshold;
+                float _HighlightStrength;
+                float _AmbientStrength;
+                float _VertexSnap;
+            CBUFFER_END
+
+            float3 SnapWorldPosition(float3 positionWS)
+            {
+                if (_VertexSnap <= 0.0001)
+                    return positionWS;
+                return floor(positionWS / _VertexSnap + 0.5) * _VertexSnap;
+            }
+
+            // Snap is applied in world space, so the shadow pass repeats it to stay aligned
+            // with the forward pass instead of casting from unsnapped geometry.
+            float4 GetShadowPositionHClip(float3 positionOS)
+            {
+                float3 positionWS = TransformObjectToWorld(positionOS);
+                positionWS = SnapWorldPosition(positionWS);
+                return TransformWorldToHClip(positionWS);
+            }
+
+            float4 ShadowVert(float4 positionOS : POSITION) : SV_POSITION
+            {
+                return GetShadowPositionHClip(positionOS.xyz);
+            }
+
+            half4 ShadowFrag() : SV_Target
+            {
+                return 0;
+            }
+            ENDHLSL
         }
-        ENDCG
+
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
+
+            ZWrite On
+            ColorMask R
+            Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex DepthVert
+            #pragma fragment DepthFrag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _MainTex_ST;
+                half4 _Color;
+                half4 _HighlightColor;
+                float _TexturePixels;
+                float _ColorSteps;
+                float _ShadowThreshold;
+                float _ShadowStrength;
+                float _HighlightThreshold;
+                float _HighlightStrength;
+                float _AmbientStrength;
+                float _VertexSnap;
+            CBUFFER_END
+
+            float3 SnapWorldPosition(float3 positionWS)
+            {
+                if (_VertexSnap <= 0.0001)
+                    return positionWS;
+                return floor(positionWS / _VertexSnap + 0.5) * _VertexSnap;
+            }
+
+            float4 DepthVert(float4 positionOS : POSITION) : SV_POSITION
+            {
+                float3 positionWS = TransformObjectToWorld(positionOS.xyz);
+                positionWS = SnapWorldPosition(positionWS);
+                return TransformWorldToHClip(positionWS);
+            }
+
+            half4 DepthFrag() : SV_Target
+            {
+                return 0;
+            }
+            ENDHLSL
+        }
     }
 
-    FallBack "Diffuse"
+    Fallback Off
 }

@@ -1,0 +1,71 @@
+Cartoon projection channel acceptance
+Unity 6000.3.25f1; frames=40; sprite=Run_000
+sprite bounds center=(0.00, 1.27, 0.00) size=(2.56, 3.84, 0.20) pixelsPerUnit=100 rect=(x:0.00, y:0.00, width:256.00, height:384.00) readable=True worldScale=(1.04, 1.04, 1.04)
+sprite renderer world size=(2.67, 4.00, 0.21) camera ortho=2.2 pixelsPerUnitOnScreen=109.1
+art rect in frame=(x:0.00, y:0.00, width:256.00, height:384.00) pivot=(128.00, 65.00)
+prop world top=0.350
+registry controllers=1 component=45764
+registrations=2 controller sweep found 1
+  sweep: 'character' active=True enabled=True componentHideFlags=None objectHideFlags=None mode=Inherit
+
+1. Four switch combinations
+  10_both_off: scene=off character=off characterProjected=False originalSpriteEnabled=True sceneRegions=96 png=26126B
+  11_scene_only: scene=on character=off characterProjected=False originalSpriteEnabled=True sceneRegions=96 png=22127B
+  12_character_only: scene=off character=on characterProjected=True originalSpriteEnabled=False sceneRegions=96 png=26428B
+  13_both_on: scene=on character=on characterProjected=True originalSpriteEnabled=False sceneRegions=96 png=22412B
+  changed pixels - scene switch: 264437, character switch: 979, scene switch while character on: 264451, character switch while scene on: 981
+  PASS: all four combinations render, each switch changes pixels, and the two channels never overlap
+
+2. Scene and character parameters are independent
+  character colorStep 4 -> 40: sceneRegions=96 (was 96), sceneEdges=278 (was 278), characterPreparations=1, cache=1 (was 1)
+  scene contourTolerance -> 2.5: characterPreparations=0, characterRegions=1889 (was 1889), sceneEdges=264 (was 278)
+  palette-only change: characterPreparations=0 (expected 0)
+  character channel off: sceneRegions=96, characterCache=1
+  PASS: both channels' parameters, caches and results are independent
+
+3. Character animation continues while the scene is busy
+  while the scene was rebuilding, the character showed 8 distinct frame(s): Run_000, Run_001, Run_002, Run_003, Run_004, Run_005, Run_006, Run_007
+  scene regions after the churn: 159 (before 96)
+
+4. Replaying cached frames does not rebuild
+  replaying 40 frames twice: newPreparations=0 cacheHits=80 entries=40 pixels=3932160 hitRate=60.8 %
+  PASS: cached frames replay without rebuilding and stay inside both budgets
+
+5. ProjectedShapes produces real simplified polygons with original colours
+  sample=256x384 regions=1889 edges=9432->5612 triangles=6842 vertices=13684 buildMs=24.9 palette=94 distinct=94 nearWhite=1.1 %
+  cache: entries=40 pixels=3932160 hits=130 misses=83 hitRate=61.0 % evictions=0
+  Original mode: originalSpriteEnabled=True projected=False
+  PASS: real simplified polygons, original palette, and Original mode restores the sprite
+
+6. Occlusion in front of and behind scene props
+  png evidence: front=23898B off=23920B; behind=19232B off=19195B
+  projected silhouette pixels: front=2710 behind=1227 | prop disabled: front=2755 behind=2755
+  pixels hidden by the prop behind it: 1528
+  PASS: depth-tested compositing keeps prop occlusion for the rebuilt character
+
+7. Camera pan, zoom and rotation
+  visible character pixels: panned=2693 zoomed=5429 rotated=2581; projected silhouette nodes=1
+  PASS: no duplicated character and no lost character across pan/zoom/rotation
+
+8. Flip, transparent edges and foot baseline
+  flipX changed 3057 pixels (expected a mirrored silhouette)
+  shape local rect x[-1.280,1.280] y[-0.650,3.190] sprite bounds center=(0.00, 1.27, 0.00) size=(2.56, 3.84, 0.20)
+  sprite local rect x[-1.280,1.280] y[-0.650,3.190]
+  silhouette pixels: rebuilt=2710 original=2705 ratio=1.00
+  PASS: rebuilt silhouette matches the original sprite, so edges stay transparent
+
+9. Toggling, respawning and scene unloading stay bounded
+  after 12 toggles: generated nodes 2 -> 2, cache=40 entries/3932160 px
+  after respawn: tracked=2 projected=2
+  after destroy: tracked=1 cache=40
+  after scene swap: liveProjections=0 cache=40 (was 40)
+  PASS: toggles, respawn and scene unload stay bounded and tracked
+
+10. Per-channel counters
+  capture set: 7 renderers (scene=4 excluded=2 character=1) -> 4 draws at 191x143
+  scene channel: cameras=1 regions=160 edges=4970->421 triangles=516 width=191 buildMs=12.6 failures=0 discarded=0
+  character channel: characters=1/1 prepares=41/41 failed=0 cache=40 entries/3932160 px hitRate=61.2 % evictions=0 buildMs=20.3
+  controller discovery: registrations=3 
+  cache: entries=40 pixels=3932160 hits=131 misses=83 evictions=0 hitRate=61.2 %
+
+RESULT: PASS

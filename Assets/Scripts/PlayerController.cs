@@ -45,6 +45,38 @@ public class PlayerController : MonoBehaviour
     private bool jumpPressedThisFrame;
     private int skipWalkableConstraintUntilFrame = -1;
 
+    // Read-only animation state. Projection/collision behavior remains the GitHub implementation.
+    public float HorizontalSpeed { get; private set; }
+    public float VerticalSpeed { get; private set; }
+    public bool IsGrounded { get; private set; }
+    public bool IsRunning { get; private set; }
+    public bool IsInputPaused { get; private set; }
+    public float FacingSign { get; private set; } = 1f;
+    public int JumpCount { get; private set; }
+    public event System.Action Jumped;
+
+    void ReportInput(float inputX)
+    {
+        HorizontalSpeed = Mathf.Abs(inputX) * moveSpeed;
+        IsRunning = Mathf.Abs(inputX) > 0.01f && Input.GetKey(KeyCode.LeftShift);
+        if (Mathf.Abs(inputX) > 0.01f) FacingSign = inputX > 0f ? 1f : -1f;
+    }
+
+    void ReportJump()
+    {
+        JumpCount++;
+        IsGrounded = false;
+        Jumped?.Invoke();
+    }
+
+    void ResetAnimationMotion()
+    {
+        HorizontalSpeed = 0f;
+        VerticalSpeed = 0f;
+        IsRunning = false;
+        IsGrounded = true;
+    }
+
     void Awake()
     {
         controller = GetComponent<CharacterController>();
@@ -97,6 +129,7 @@ public class PlayerController : MonoBehaviour
         velocity = Vector3.zero;
         jumpsRemaining = Mathf.Max(1, maxJumpCount);
         currentProjectionInteractable = null;
+        ResetAnimationMotion();
     }
 
     public void SyncProjectionBodyToWorld()
@@ -134,6 +167,7 @@ public class PlayerController : MonoBehaviour
 
         if (controllerWasEnabled)
             controller.enabled = true;
+        ResetAnimationMotion();
     }
 
     void Move()
@@ -145,8 +179,13 @@ public class PlayerController : MonoBehaviour
             cameraController.IsSwitchingView ||
             cameraController.IsFirstPerson;
 
+        IsInputPaused = inputPaused;
         if (inputPaused)
         {
+            HorizontalSpeed = 0f;
+            VerticalSpeed = 0f;
+            IsRunning = false;
+            IsGrounded = useProjectionPhysics ? IsProjectionGrounded() : controller != null && controller.isGrounded;
             if (projectionBody != null)
                 projectionBody.linearVelocity = Vector2.zero;
             return;
@@ -170,10 +209,12 @@ public class PlayerController : MonoBehaviour
             return;
 
         float inputX = GetHorizontalInput();
+        ReportInput(inputX);
         Vector2 bodyVelocity = projectionBody.linearVelocity;
         bodyVelocity.x = inputX * moveSpeed;
 
         bool grounded = IsProjectionGrounded();
+        IsGrounded = grounded;
         if (grounded)
         {
             coyoteCounter = coyoteTime;
@@ -190,12 +231,14 @@ public class PlayerController : MonoBehaviour
         {
             bodyVelocity.y = GetJumpVelocity();
             ConsumeJump();
+            ReportJump();
         }
 
         bodyVelocity.y += gravity * Time.deltaTime;
         projectionBody.linearVelocity = bodyVelocity;
         ConstrainProjectionBodyToWalkableArea();
         velocity.y = bodyVelocity.y;
+        VerticalSpeed = bodyVelocity.y;
 
         if (currentProjectionInteractable != null && Input.GetKeyDown(projectionInteractKey))
             currentProjectionInteractable.Interact(this);
@@ -209,9 +252,11 @@ public class PlayerController : MonoBehaviour
         Vector3 right = cameraController.GetRight();
         float inputX = GetHorizontalInput();
         Vector3 move = right * inputX;
+        ReportInput(inputX);
 
         controller.Move(move * moveSpeed * Time.deltaTime);
 
+        IsGrounded = controller.isGrounded;
         if (controller.isGrounded)
         {
             coyoteCounter = coyoteTime;
@@ -228,11 +273,13 @@ public class PlayerController : MonoBehaviour
         {
             velocity.y = GetJumpVelocity();
             ConsumeJump();
+            ReportJump();
         }
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
         ConstrainWorldPositionToWalkableArea();
+        VerticalSpeed = velocity.y;
     }
 
     void UpdateJumpBuffer()

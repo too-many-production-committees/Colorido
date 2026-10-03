@@ -1,0 +1,17 @@
+PASS: Main scene has no missing scripts
+PASS: Animation driver and controller are connected
+PASS: Original Idle / IdleVariant / Move state machine preserved
+PASS: All 7 original Animator parameters preserved
+PASS: Grounded movement enters Move
+PASS: Move plays all 40 sprite frames (observed 40)
+PASS: Run input increases animation playback speed
+PASS: Facing matches preserved artwork orientation
+PASS: Camera input pause freezes animation
+PASS: Animation resumes after pause
+PASS: Stopping enters default Idle before random selection
+PASS: Idle driver selects IdleVariant
+PASS: Jump telemetry reaches animation driver
+INFO: Backup has no Jump or Fall clips/states; placeholders remain unchanged.
+PASS: Restored main scene produces projected scene geometry
+Unity version: 6000.3.25f1
+RESULT: PASS

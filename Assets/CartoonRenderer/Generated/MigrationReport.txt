@@ -1,0 +1,36 @@
+Scene needed no material repair: Assets/Scenes/SampleScene.unity
+Built-in material repair finished; 0 renderer slot(s) replaced.
+    Test model added at (-4.20, 0.75, 0.40) (shader Custom/Pixelated Model, texture ProjectionTestTex)
+Saved preview scene: Assets/Scenes/CartoonMigrationPreview.unity (renderer slots repaired: 0)
+Captured Assets/CartoonRenderer/Generated/Captures/01_effect_off.png :: Effect disabled (no projection rebuild)
+Captured Assets/CartoonRenderer/Generated/Captures/02_effect_on.png :: 33 regions; 4617 → 98 contour edges; 158 triangles; CPU 18.6 ms
+Captured Assets/CartoonRenderer/Generated/Captures/03_contours_debug.png :: 33 regions; 4617 → 98 contour edges; 158 triangles; CPU 19.5 ms
+Captured Assets/CartoonRenderer/Generated/Captures/04_camera_rotated.png :: 30 regions; 4577 → 83 contour edges; 88 triangles; CPU 19.3 ms
+Cartoon projection migration - comparison captures
+Unity 6000.3.25f1; pipeline CartoonUniversalRenderPipeline; renderer CartoonUniversalRenderer
+Renderer feature: Cartoon Projection Renderer, active=True
+Camera fixed at (0.00, 3.24, -10.00) -> (0.00, 3.24, -10.00), orthographic size 5.60
+
+01_effect_off.png  640x480
+    statistics: Effect disabled (no projection rebuild)
+02_effect_on.png  640x480
+    statistics: 33 regions; 4617 → 98 contour edges; 158 triangles; CPU 18.6 ms
+03_contours_debug.png  640x480
+    statistics: 33 regions; 4617 → 98 contour edges; 158 triangles; CPU 19.5 ms
+04_camera_rotated.png  640x480
+    statistics: 30 regions; 4577 → 83 contour edges; 88 triangles; CPU 19.3 ms
+
+
+Cartoon projection migration - comparison captures
+Unity 6000.3.25f1; pipeline CartoonUniversalRenderPipeline; renderer CartoonUniversalRenderer
+Renderer feature: Cartoon Projection Renderer, active=True
+Camera fixed at (0.00, 3.24, -10.00) -> (0.00, 3.24, -10.00), orthographic size 5.60
+
+01_effect_off.png  640x480
+    statistics: Effect disabled (no projection rebuild)
+02_effect_on.png  640x480
+    statistics: 33 regions; 4617 → 98 contour edges; 158 triangles; CPU 18.6 ms
+03_contours_debug.png  640x480
+    statistics: 33 regions; 4617 → 98 contour edges; 158 triangles; CPU 19.5 ms
+04_camera_rotated.png  640x480
+    statistics: 30 regions; 4577 → 83 contour edges; 88 triangles; CPU 19.3 ms

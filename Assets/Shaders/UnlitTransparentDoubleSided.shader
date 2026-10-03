@@ -10,6 +10,7 @@ Shader "Custom/Unlit Transparent Double Sided"
     {
         Tags
         {
+            "RenderPipeline" = "UniversalPipeline"
             "Queue" = "Transparent"
             "RenderType" = "Transparent"
             "IgnoreProjector" = "True"
@@ -22,40 +23,47 @@ Shader "Custom/Unlit Transparent Double Sided"
 
         Pass
         {
-            CGPROGRAM
+            Name "Unlit"
+            Tags { "LightMode" = "SRPDefaultUnlit" }
+
+            HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #include "UnityCG.cginc"
 
-            struct appdata
-            {
-                float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-            };
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-            };
-
-            sampler2D _MainTex;
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
             float4 _MainTex_ST;
-            fixed4 _Color;
+            half4 _Color;
 
-            v2f vert(appdata v)
+            struct Attributes
             {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                return o;
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            Varyings vert(Attributes input)
+            {
+                Varyings output;
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                return output;
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                return tex2D(_MainTex, i.uv) * _Color;
+                return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * _Color;
             }
-            ENDCG
+            ENDHLSL
         }
     }
+
+    Fallback Off
 }

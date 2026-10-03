@@ -1,0 +1,11 @@
+PASS: cold start, motion tier, settle detail, fixed tooling, legacy mode, camera cut policy.
+Alignment pixels cached=RGBA(128, 64, 32, 255); fresh=RGBA(128, 64, 32, 255)
+PASS: cached orthographic PanX matches fresh polygons; differing pixels=0
+Alignment pixels cached=RGBA(128, 64, 32, 255); fresh=RGBA(128, 64, 32, 255)
+PASS: cached orthographic PanY matches fresh polygons; differing pixels=0
+Alignment pixels cached=RGBA(128, 64, 32, 255); fresh=RGBA(128, 64, 32, 255)
+PASS: cached orthographic Zoom matches fresh polygons; differing pixels=0
+PASS: motion 320px, settled 640px; settled A/B changed pixels=0
+BASELINE: samples=14; capture->redraw-submit p50=176.8ms p95=320.8ms; CPU build p50=155.8ms; completed-update interval p50=176.2ms
+LOW_LATENCY: samples=29; capture->redraw-submit p50=78.5ms p95=167.5ms; CPU build p50=62.5ms; completed-update interval p50=77.4ms
+NOTE: submission timings exclude monitor presentation; native batch samples are not a sealed hardware benchmark.

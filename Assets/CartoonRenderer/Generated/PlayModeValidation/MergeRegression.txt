@@ -1,0 +1,6 @@
+NOTE: source SampleScene has no ProjectionPlayerOcclusionVisualizer; no component added.
+PASS: animated player/controller, missing-script check and legacy effect off.
+PASS: merged SampleScene redraw: 4 regions; 3512 → 16 contour edges; 26 triangles; CPU 24.4 ms
+PASS: two actual Move frames visible in URP, not magenta, unchanged by 2D projection.
+Move distinct frames=40; shader=Sprites/Default
+PASS: SampleScene was not saved; player source/assets were not regenerated.

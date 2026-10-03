@@ -1,0 +1,5 @@
+Unity 6000.3.25f1; Metal; room 640x480
+Overview: 324 regions; 21124 → 1385 contour edges; 4950 triangles; CPU 58.1 ms
+Rotated: 333 regions; 20727 → 1431 contour edges; 5394 triangles; CPU 61.7 ms
+Character visible pixels: front=1692, behind=1356 (difference threshold 6/255)
+PASS: room redraw, contours, rotated view, 2D character front/behind depth occlusion

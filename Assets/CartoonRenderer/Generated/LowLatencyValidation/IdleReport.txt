@@ -1,0 +1,6 @@
+PASS: cold start and rotation complete; equal-width tiers refine to the final settled pose.
+PASS: two frozen cameras perform zero rebuilds during a 2-second stationary window.
+PASS: content notifications reach both cameras, including notifications during in-flight jobs.
+PASS: style changes wake both frozen cameras.
+PASS: 0.5 Hz stationary cadence, 3 completions over 4.5 seconds.
+PASS: rotation wakes both cameras without waiting for the idle deadline.

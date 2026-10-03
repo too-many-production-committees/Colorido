@@ -10,9 +10,10 @@ Shader "Custom/Billboard Image"
     {
         Tags
         {
-            "Queue"="Transparent"
-            "RenderType"="Transparent"
-            "IgnoreProjector"="True"
+            "RenderPipeline" = "UniversalPipeline"
+            "Queue" = "Transparent"
+            "RenderType" = "Transparent"
+            "IgnoreProjector" = "True"
         }
 
         Cull Off
@@ -22,41 +23,47 @@ Shader "Custom/Billboard Image"
 
         Pass
         {
-            CGPROGRAM
+            Name "Unlit"
+            Tags { "LightMode" = "SRPDefaultUnlit" }
+
+            HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
 
-            #include "UnityCG.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            sampler2D _MainTex;
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
             float4 _MainTex_ST;
-            fixed4 _Color;
+            half4 _Color;
 
-            struct appdata
+            struct Attributes
             {
-                float4 vertex : POSITION;
+                float4 positionOS : POSITION;
                 float2 uv : TEXCOORD0;
             };
 
-            struct v2f
+            struct Varyings
             {
-                float4 vertex : SV_POSITION;
+                float4 positionCS : SV_POSITION;
                 float2 uv : TEXCOORD0;
             };
 
-            v2f vert(appdata v)
+            Varyings vert(Attributes input)
             {
-                v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-                return o;
+                Varyings output;
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                return output;
             }
 
-            fixed4 frag(v2f i) : SV_Target
+            half4 frag(Varyings input) : SV_Target
             {
-                return tex2D(_MainTex, i.uv) * _Color;
+                return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * _Color;
             }
-            ENDCG
+            ENDHLSL
         }
     }
+
+    Fallback Off
 }

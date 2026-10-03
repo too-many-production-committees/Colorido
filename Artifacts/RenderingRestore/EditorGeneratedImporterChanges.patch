@@ -1,0 +1,1295 @@
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-0.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-0.png.meta
+index 09dec92..3297e79 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-0.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-0.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 212aea862bfe9ee42b53e6f37fa78fc9
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 5949557556085163181
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-0_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-0_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: da4823d3313119250800000000000000
++      internalID: 5949557556085163181
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-1.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-1.png.meta
+index 631d565..29eb209 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-1.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-1.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 55135327cd705584aa6945541b4a1f03
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 9062256169985567663
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-1_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-1_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: fabe49309f993cd70800000000000000
++      internalID: 9062256169985567663
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-10.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-10.png.meta
+index a8330c0..2541474 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-10.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-10.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: ab8428437c7c9054c94366485a57ce71
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 8572644956541350763
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-10_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-10_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: b63f03c0b2728f670800000000000000
++      internalID: 8572644956541350763
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-11.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-11.png.meta
+index 3c54a7d..e4f95b2 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-11.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-11.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 867bc48e89629b74fa0fbed0f862f485
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -903626823443988595
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-11_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-11_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: d8f3b13113ca573f0800000000000000
++      internalID: -903626823443988595
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-12.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-12.png.meta
+index 9393e82..f00cd35 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-12.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-12.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 791dc8c75efb98d4a91d018d0a9b7701
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -520110002893124875
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-12_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-12_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 5fa8d6145b238c8f0800000000000000
++      internalID: -520110002893124875
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-13.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-13.png.meta
+index c8f7c74..63a7b3b 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-13.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-13.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: c57eb6b65eea6db429a3e33fb92f7e45
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -4848969759476371200
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-13_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-13_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 001bcc7d1bff4bcb0800000000000000
++      internalID: -4848969759476371200
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-14.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-14.png.meta
+index d4eb27d..9d2c93d 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-14.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-14.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: a515a095b3318564b91c46fba0d86dd8
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -1809697959795570110
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-14_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-14_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 24ac2a33b49a2e6e0800000000000000
++      internalID: -1809697959795570110
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-15.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-15.png.meta
+index 5e205b4..80144f6 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-15.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-15.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 19621cf56602a0243ade1fce1cbdca1a
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -1783380936429569900
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-15_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-15_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 49879e0bc782047e0800000000000000
++      internalID: -1783380936429569900
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-2.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-2.png.meta
+index 81629ec..0056066 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-2.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-2.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 6577ddda7f09a09449e37c518ca0287b
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 5650598738888883405
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-2_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-2_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: dccfdb76d95fa6e40800000000000000
++      internalID: 5650598738888883405
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-3.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-3.png.meta
+index 1d99801..e4cbde6 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-3.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-3.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 83ca0b394e6e5e341b22fcf8aa0c2b05
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 8151843523802944433
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-3_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-3_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 1b3d7dc9e7a212170800000000000000
++      internalID: 8151843523802944433
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-4.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-4.png.meta
+index 078d41e..00fbaea 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-4.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-4.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 2985b43a7a0e8bb41a317d62837a452a
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 8376837730930119048
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-4_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-4_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 881dd2da881804470800000000000000
++      internalID: 8376837730930119048
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-5.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-5.png.meta
+index 495df7e..c9633b4 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-5.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-5.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 2e9297577e104404aa0029563eb0176e
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 2872714370158589195
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-5_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-5_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: b057676df7eedd720800000000000000
++      internalID: 2872714370158589195
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-6.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-6.png.meta
+index d2c716a..dc71673 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-6.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-6.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: f8137350cb7e7e34984e171b1be66968
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -6527415616855120834
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-6_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-6_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: e3463088416f965a0800000000000000
++      internalID: -6527415616855120834
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-7.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-7.png.meta
+index a9412c2..09e4d17 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-7.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-7.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 06d383fa7de944d4bb9173aff520c6b0
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 8523821160933284029
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-7_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-7_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: db8d26a4f22ba4670800000000000000
++      internalID: 8523821160933284029
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-8.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-8.png.meta
+index 2cefbf4..bbfedca 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-8.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-8.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: e3d6591257c5dad4db3f297fe32c3dc3
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -79058164521143083
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-8_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-8_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 5d47f1ba40127eef0800000000000000
++      internalID: -79058164521143083
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-9.png.meta b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-9.png.meta
+index 1de674d..b0196d9 100644
+--- a/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-9.png.meta
++++ b/Assets/Anime/NPC-1/e2156ebc-b183-4bb0-8dc2-e4153f30beed-9.png.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: 9b4c7292e4377724faf7b543641e3ee3
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: -897589184006494678
++    second: e2156ebc-b183-4bb0-8dc2-e4153f30beed-9_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: e2156ebc-b183-4bb0-8dc2-e4153f30beed-9_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 200
++        height: 200
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: a266f0d846f1b83f0800000000000000
++      internalID: -897589184006494678
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 5e97eb03825dee720800000000000000
+@@ -106,6 +132,8 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
++    spriteCustomMetadata:
++      entries: []
+     nameFileIdTable: {}
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+diff --git a/Assets/Texture/OIP-C.jpg.meta b/Assets/Texture/OIP-C.jpg.meta
+index 1b0cccf..f22b22e 100644
+--- a/Assets/Texture/OIP-C.jpg.meta
++++ b/Assets/Texture/OIP-C.jpg.meta
+@@ -1,7 +1,10 @@
+ fileFormatVersion: 2
+ guid: fb2fb424156411c4cb65fad91ba6c82a
+ TextureImporter:
+-  internalIDToNameTable: []
++  internalIDToNameTable:
++  - first:
++      213: 3891092591245486208
++    second: OIP-C_0
+   externalObjects: {}
+   serializedVersion: 13
+   mipmaps:
+@@ -67,7 +70,7 @@ TextureImporter:
+   swizzle: 50462976
+   cookieLightType: 0
+   platformSettings:
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: DefaultTexturePlatform
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -80,7 +83,7 @@ TextureImporter:
+     ignorePlatformSupport: 0
+     androidETC2FallbackOverride: 0
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+-  - serializedVersion: 3
++  - serializedVersion: 4
+     buildTarget: Standalone
+     maxTextureSize: 2048
+     resizeAlgorithm: 0
+@@ -95,8 +98,31 @@ TextureImporter:
+     forceMaximumCompressionQuality_BC6H_BC7: 0
+   spriteSheet:
+     serializedVersion: 2
+-    sprites: []
++    sprites:
++    - serializedVersion: 2
++      name: OIP-C_0
++      rect:
++        serializedVersion: 2
++        x: 0
++        y: 0
++        width: 188
++        height: 282
++      alignment: 0
++      pivot: {x: 0, y: 0}
++      border: {x: 0, y: 0, z: 0, w: 0}
++      customData: 
++      outline: []
++      physicsShape: []
++      tessellationDetail: -1
++      bones: []
++      spriteID: 08867598810fff530800000000000000
++      internalID: 3891092591245486208
++      vertices: []
++      indices: 
++      edges: []
++      weights: []
+     outline: []
++    customData: 
+     physicsShape: []
+     bones: []
+     spriteID: 
+@@ -106,7 +132,10 @@ TextureImporter:
+     edges: []
+     weights: []
+     secondaryTextures: []
+-    nameFileIdTable: {}
++    spriteCustomMetadata:
++      entries: []
++    nameFileIdTable:
++      OIP-C_0: 3891092591245486208
+   mipmapLimitGroupName: 
+   pSDRemoveMatte: 0
+   userData: 

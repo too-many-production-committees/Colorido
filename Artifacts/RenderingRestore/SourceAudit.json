@@ -1,0 +1,18 @@
+{
+  "base_commit": "8913ee419dcd2d191423f8047159f4659edc773a",
+  "backup_stash": "f195caed9b96471d7143b49a3c9eee3df7e3727a",
+  "tested_unity": "6000.3.25f1",
+  "project_unity": "6000.4.6f1",
+  "protected_gameplay": {
+    "Assets/Scripts/FezCameraController.cs": "b607755d989c0c38dfb0a45f8d0e99bc11535a39a1d41e596082c5b6052af55d",
+    "Assets/Scripts/ProjectionManager.cs": "3a5b56e15325922644cbace0723d301f230d058ed4f74cb1edce8ce6f17442c8",
+    "Assets/Scripts/ProjectionPhysicsBuilder.cs": "c7400bbe294ba9a0cdd28016654cfb2d550f1151a3564decd56fe1c7ae522e13",
+    "Assets/Scripts/ProjectionObjectRoleMarker.cs": "8edeb0e920e07f9d860a03ccd322f5c394440dfc139305fef4bfeab8aacfa359",
+    "Assets/Scripts/ProjectionPlayerActionRelocator.cs": "d2a3fb181502dcaec1b1bd4c0314def78b1ca49c6209fee7fa8c8de6d54a12fd",
+    "Assets/Scripts/ProjectionPlayerOcclusionVisualizer.cs": "a0d0b0f9f5918c9ebdd488a2b101e10ba088f70a21aa44982bc200006826bdfd",
+    "Assets/Scripts/ProjectionOccluder.cs": "4ad51a8093eacbc9998c0af2357fa24a133d8b1bb3165a5267ccfc82c6356c0d",
+    "Assets/Scripts/ProjectionPhysicsProxy.cs": "4fccef39e104c62842c236b33f5f8773cf60e87501cdc1433a5d886183752fba"
+  },
+  "Assets/Anime/Player/Player.controller": "8b969a36caf8e596a8dd9b38f1b1805a8c6e23c55cefc032eb7401279e30b495",
+  "Assets/Scripts/PlayerAnimationDriver.cs": "5877be36e36734a6b36e2683bd63f0711d44b470c4583d3e3e998eb7de47d746"
+}
